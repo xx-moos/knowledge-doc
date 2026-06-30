@@ -1,0 +1,1724 @@
+==================================== [[第一周学习计划]] ====================================
+
+------------------------------ [1. 第一周学习计划] ------------------------------
+
+▶ SYSTEM: 
+
+You are a helpful assistant.
+
+
+▶ USER: 
+
+非常详细地列出第一周学习计划以及详细的代码讲解和ts的对比 
+
+
+▶ ASSISTANT: 
+
+# 📘 WEEK 1：Java 语言 + Maven 工程基础（50小时·详细版）
+
+> **核心理念**：用你熟悉的 TypeScript/JavaScript 做锚点，每个 Java 概念都找到前端对应，**只学"前端不会的东西"**。
+> **你的状态**：VS Code + WSL + JDK 21 已配置 ✅
+
+---
+
+## 🗓️ 七天总览
+
+```
+Day 1（6h）  ██ 环境收尾 + Hello World + 类型系统入门
+Day 2（8h）  ████ 基础语法：变量、类型、运算符、控制流
+Day 3（8h）  ████ 集合框架 + 异常处理 + 实战练习
+Day 4（8h）  ████ 面向对象（OOP）：类、继承、接口、Lombok
+Day 5（8h）  ████ 现代特性：Record、Stream、Pattern Matching、Virtual Threads
+Day 6（8h）  ████ Maven 深度学习 + 多模块项目实践
+Day 7（4h）  ██ Git规范 + 阿里巴巴手册 + 周复盘检验
+```
+
+---
+
+# 📅 Day 1（6h）：环境收尾 + Java 初体验
+
+## 🎯 今日目标
+- VS Code Java 插件全部装好，F5 能调试
+- 理解 Java 程序从源码到运行的全流程
+- 掌握 8 种基本类型 + String
+- 理解 Java 的**强类型+静态类型**与 TypeScript 的根本差异
+
+---
+
+## ⏰ 上午（2h）：VS Code 插件安装与环境验证
+
+### 第一步：安装插件包
+
+在 WSL 终端中执行：
+
+```bash
+# 1. Java 全家桶（语法高亮、调试、测试、Maven、项目管理、AI补全）
+code --install-extension vscjava.vscode-java-pack
+
+# 2. Spring Boot 全家桶（后续用，先装上）
+code --install-extension vmware.vscode-boot-dev-pack
+
+# 3. Lombok 注解支持
+code --install-extension gabrielbb.vscode-lombok
+
+# 4. 代码质量检查（类比 ESLint）
+code --install-extension SonarSource.sonarlint-vscode
+```
+
+### 第二步：配置 settings.json
+
+`Ctrl+Shift+P` → `Preferences: Open User Settings (JSON)`，添加：
+
+```json
+{
+  "java.jdt.ls.java.home": "/usr/lib/jvm/java-21-openjdk-amd64",
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-21",
+      "path": "/usr/lib/jvm/java-21-openjdk-amd64",
+      "default": true
+    }
+  ],
+  "java.compile.nullAnalysis.mode": "automatic",
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "maven.executable.path": "mvn",
+  "maven.terminal.useJavaHome": true,
+  "spring-boot.ls.java.home": "/usr/lib/jvm/java-21-openjdk-amd64",
+  "java.saveActions.organizeImports": true,
+  "[java]": {
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true
+  }
+}
+```
+
+### 第三步：环境验证
+
+```bash
+# 确认 JDK
+java -version   # 应输出 21.x.x
+javac -version  # 应输出 21.x.x
+
+# 确认 Maven（如果没有则安装）
+mvn --version   # 如果没有 → sudo apt install maven -y
+```
+
+### ⚠️ WSL 关键提醒
+
+```
+✅ 项目代码必须放在 WSL 内部：~/projects/
+❌ 绝对不要放在 /mnt/c/ （跨文件系统I/O会慢10倍以上）
+✅ VS Code 左下角应显示 "WSL: Ubuntu-xx"
+```
+
+---
+
+## ⏰ 下午（4h）：第一段 Java 代码 + 类型系统
+
+### 1. Hello World —— 对比 TypeScript
+
+**TypeScript 版：**
+```typescript
+// hello.ts
+function main(): void {
+    console.log("Hello, World!");
+}
+main();
+// 运行：npx ts-node hello.ts
+```
+
+**Java 版：**
+```java
+// HelloWorld.java —— 文件名必须和 public class 名完全一致！
+public class HelloWorld {
+    public static void main(String[] args) {
+        System.out.println("Hello, World!");
+    }
+}
+// 编译：javac HelloWorld.java  → 生成 HelloWorld.class（字节码）
+// 运行：java HelloWorld         → JVM 执行字节码
+```
+
+**🧠 关键差异剖析：**
+
+| 维度 | TypeScript | Java | 为什么？ |
+|------|-----------|------|---------|
+| **文件名规则** | 任意名，`export` 决定对外暴露 | 文件名 ≡ public class 名 | Java 编译器强约束 |
+| **入口函数** | 任意位置写代码即可执行 | 必须有 `public static void main(String[] args)` | JVM 规范：固定签名入口 |
+| **打印** | `console.log()` | `System.out.println()` | `System`是类，`out`是静态字段，`println()`是方法——一切都是类 |
+| **运行方式** | `ts-node` 直接解释 | 必须先 `javac` 编译成 `.class`，再 `java` 运行 | Java 是**编译型+解释型**：编译→字节码→JVM解释 |
+| **一切皆类** | 可以写顶层函数 | **所有代码必须在类内部！** | Java 没有"顶层"这个概念 |
+
+### 2. 在 VS Code 中运行 Java —— 三种方式
+
+```bash
+# 方式一：终端手动（理解底层原理时用）
+javac HelloWorld.java && java HelloWorld
+
+# 方式二：VS Code 内置（日常开发用）
+# 打开 HelloWorld.java → 点击 main 方法上方的 "Run | Debug" 文字
+
+# 方式三：F5 调试（需要断点时用）
+# 在行号左侧点击设置断点 → F5 启动调试
+```
+
+### 3. Java 的 8 种基本类型 + String —— 对比 TypeScript
+
+这是 Java 与 TS **最大的不同之一**。Java 类型分两大类：
+
+```
+Java 类型体系
+├── 基本类型（Primitive Types）—— 存值，不是对象
+│   ├── 整数型：byte(1B) short(2B) int(4B) long(8B)
+│   ├── 浮点型：float(4B) double(8B)
+│   ├── 字符型：char(2B) —— Unicode，不是JS的string！
+│   └── 布尔型：boolean —— 只有 true/false，没有 truthy/falsy
+│
+└── 引用类型（Reference Types）—— 存地址，是对象
+    ├── String —— 字符串（最常用）
+    ├── 数组：int[], String[]
+    ├── 类：自定义 class
+    └── 包装类：Integer, Long, Double, Boolean 等
+```
+
+**与 TypeScript 的核心差异：**
+
+```typescript
+// ============ TypeScript ============
+let age: number = 25;         // 只有一个 number
+let price: number = 99.99;    // 整数小数都是 number
+let name: string = "Alice";
+let flag: boolean = true;
+let bigNum: bigint = 9007199254740991n;
+
+// 动态类型：可以改变
+let x = 10;
+x = "hello";  // ✅ TS 允许（union type 或 any）
+```
+
+```java
+// ============ Java ============
+int age = 25;                 // 整数用 int
+double price = 99.99;         // 小数用 double
+long bigNum = 9007199254740991L;  // 长整数，必须加 L
+String name = "Alice";        // String 是大写 S！
+boolean flag = true;          // 只有 true/false
+
+// ❌ 不能这样！
+// int x = 10;
+// x = "hello";   // 编译错误！int 只能是整数
+
+// ✅ 但可以用 var 做局部类型推断
+var y = 10;      // 编译器推断为 int
+// y = "hello";  // 仍然是错！var 只是语法糖，类型已锁定为 int
+```
+
+**🧠 关键理解：Java 的 `var` ≠ JavaScript 的 `var`**
+
+```java
+// Java 的 var：编译时类型推断（语法糖）
+var name = "Alice";    // 编译器推断为 String，等价于 String name = "Alice";
+var list = new ArrayList<String>();  // 推断为 ArrayList<String>
+// name = 123;         // ❌ 编译错误！类型已锁定
+
+// 只能在局部变量、for循环中使用
+// 不能用于：方法参数、返回值、类字段
+```
+
+```typescript
+// JS/TS 的 var/let：运行时动态类型
+var name = "Alice";
+name = 123;     // ✅ JS 允许（TS 看类型标注）
+let x: string | number = "hello";
+x = 42;         // ✅ TS union type 允许
+```
+
+---
+
+### 📝 Day 1 练习题（每天必敲！）
+
+```java
+// 练习1：声明各种类型变量并打印
+public class TypeDemo {
+    public static void main(String[] args) {
+        byte b = 127;                    // -128 ~ 127
+        short s = 32767;                 // ±3.2万
+        int i = 2147483647;              // ±21亿（最常用）
+        long l = 9223372036854775807L;   // 必须加 L
+        float f = 3.14f;                 // 必须加 f
+        double d = 3.141592653589793;    // 默认浮点类型
+        char c = 'A';                    // 单引号！不是双引号
+        boolean bool = true;
+        String str = "Hello Java";       // 大写 S！
+
+        System.out.println("byte: " + b);    // + 是字符串拼接
+        System.out.println("double: " + d);
+        System.out.println("char: " + c);
+    }
+}
+```
+
+```typescript
+// 对比 TypeScript
+const b: number = 127;          // 没有 byte
+const s: number = 32767;        // 没有 short
+const i: number = 2147483647;   // number 涵盖所有
+const l: bigint = 9223372036854775807n;  // 大整数用 bigint
+const f: number = 3.14;         // 没有 float
+const d: number = 3.141592653589793; // 都是 number
+const c: string = 'A';          // 单双引号都可，没有 char
+const bool: boolean = true;
+const str: string = "Hello TS";
+```
+
+---
+
+# 📅 Day 2（8h）：运算符 + 控制流 + 核心差异深挖
+
+## 🎯 今日目标
+- 掌握 Java 运算符（特别注意 `==` 陷阱）
+- 掌握控制流（if/switch/for/while）
+- 理解"值传递"与 TypeScript 的差异
+- 第一次实战：用 Java 重写 TS 工具函数
+
+---
+
+## ⏰ 上午（4h）：运算符 + 控制流
+
+### 1. 运算符对比 —— **`==` 是最大的坑！**
+
+```typescript
+// ============ TypeScript ============
+// 字符串比较
+const result = "hello" === "hello";  // true，比较值
+const result2 = "hello" == "hello";  // true，宽松比较（一般用===）
+
+// 对象比较
+const a = { name: "Alice" };
+const b = { name: "Alice" };
+a === b;  // false，比较引用
+```
+
+```java
+// ============ Java ============
+// 🔴 最大坑：String 比较！
+String s1 = "hello";
+String s2 = "hello";
+String s3 = new String("hello");
+
+s1 == s2;        // true（字符串常量池，碰巧相同引用）
+s1 == s3;        // false！== 比较的是内存地址！
+s1.equals(s3);   // true ✅ 比较内容
+
+// ✅ Java 中比较字符串的黄金法则：
+"常量".equals(变量);           // 防止 NullPointerException
+Objects.equals(a, b);          // JDK 7+，内部处理 null
+
+// 基本类型：== 比较值（没问题）
+int x = 10;
+int y = 10;
+x == y;  // true ✅ 基本类型用 == 安全
+```
+
+**🧠 记忆口诀：Java 中 `==` 比较基本类型看值，比较引用类型看地址。字符串用 `.equals()`！**
+
+### 2. 类型转换
+
+```java
+// 自动转换（小→大，安全）
+int i = 100;
+long l = i;       // int → long 自动
+double d = i;     // int → double 自动
+
+// 强制转换（大→小，可能丢失数据）
+double pi = 3.14159;
+int ipi = (int) pi;  // 3，小数部分被截断！
+
+// String → 数字（超级常用）
+String numStr = "123";
+int num = Integer.parseInt(numStr);      // "123" → 123
+double d2 = Double.parseDouble("3.14");  // "3.14" → 3.14
+
+// 数字 → String
+String s = String.valueOf(123);   // 123 → "123"
+String s2 = 123 + "";             // 拼接空字符串也行
+```
+
+```typescript
+// 对比 TypeScript
+const num: number = parseInt("123");
+const d: number = parseFloat("3.14");
+const s: string = String(123);
+const s2: string = 123 + "";     // 类似
+```
+
+### 3. 控制流
+
+```java
+// ============ if-else（和 TS 几乎一样） ============
+if (score >= 90) {
+    System.out.println("A");
+} else if (score >= 80) {
+    System.out.println("B");
+} else {
+    System.out.println("C");
+}
+
+// ============ switch 表达式（JDK 17+，现代化写法！）============
+// 老式 switch（有 fall-through 问题）
+String grade;
+switch (score / 10) {
+    case 10:
+    case 9:  grade = "A"; break;  // 别忘了 break！
+    case 8:  grade = "B"; break;
+    default: grade = "C";
+}
+
+// 新式 switch 表达式（JDK 17+，推荐！）
+String grade = switch (score / 10) {
+    case 10, 9 -> "A";    // 箭头语法，无需 break
+    case 8 -> "B";
+    default -> "C";
+};
+```
+
+```typescript
+// 对比 TypeScript
+const grade = (() => {
+    switch (Math.floor(score / 10)) {
+        case 10:
+        case 9: return "A";
+        case 8: return "B";
+        default: return "C";
+    }
+})();
+
+// 或者更优雅的方式
+const grade = Math.floor(score / 10) >= 9 ? "A"
+    : Math.floor(score / 10) === 8 ? "B"
+    : "C";
+```
+
+### 4. 循环
+
+```java
+// ============ for 循环（和 TS 一样）============
+for (int i = 0; i < 10; i++) {
+    System.out.println(i);
+}
+
+// ============ 增强 for（for-each，类比 for...of）============
+String[] names = {"Alice", "Bob", "Charlie"};
+for (String name : names) {           // 类比 TS 的 for...of
+    System.out.println(name);
+}
+
+// ============ while ============
+int count = 0;
+while (count < 5) {
+    System.out.println(count);
+    count++;
+}
+```
+
+```typescript
+// 对比
+const names = ["Alice", "Bob", "Charlie"];
+for (const name of names) {   // 和 Java 增强 for 几乎一样！
+    console.log(name);
+}
+
+// forEach（函数式，Java 后续用 Stream 对标）
+names.forEach(name => console.log(name));
+```
+
+---
+
+## ⏰ 下午（4h）：方法 + 值传递 + 实战
+
+### 1. 方法（函数）定义
+
+```java
+// ============ Java 方法 ============
+// 格式：访问修饰符 [static] 返回类型 方法名(参数类型 参数名) { }
+
+public class Calculator {
+    // 静态方法（类方法）—— 不需要实例化就能调用
+    public static int add(int a, int b) {
+        return a + b;
+    }
+
+    // 实例方法
+    public int multiply(int a, int b) {
+        return a * b;
+    }
+
+    // void 无返回值
+    public static void printInfo(String msg) {
+        System.out.println("INFO: " + msg);
+    }
+
+    // 可变参数（类比 TS 的 ...rest）
+    public static int sum(int... numbers) {
+        int total = 0;
+        for (int n : numbers) {
+            total += n;
+        }
+        return total;
+    }
+}
+
+// 调用
+int result = Calculator.add(10, 20);     // 静态方法：类名.方法名()
+Calculator.printInfo("Hello");
+int total = Calculator.sum(1, 2, 3, 4, 5);  // 可变参数
+```
+
+```typescript
+// 对比 TypeScript
+class Calculator {
+    static add(a: number, b: number): number {
+        return a + b;
+    }
+    multiply(a: number, b: number): number {
+        return a * b;
+    }
+    static sum(...numbers: number[]): number {
+        return numbers.reduce((acc, n) => acc + n, 0);
+    }
+}
+```
+
+### 2. **值传递 —— Java 的核心概念**
+
+```java
+// 🔴 Java 只有值传递！没有引用传递！
+public class PassByValue {
+    public static void changeInt(int x) {
+        x = 999;  // 改的是副本，不影响外部
+    }
+
+    public static void changeArray(int[] arr) {
+        arr[0] = 999;  // 改的是堆上的对象，外部可见！
+        arr = new int[]{1, 2, 3};  // 改的是副本引用，外部不可见！
+    }
+
+    public static void main(String[] args) {
+        int a = 10;
+        changeInt(a);
+        System.out.println(a);  // 10 ← 不变！
+
+        int[] nums = {1, 2, 3};
+        changeArray(nums);
+        System.out.println(nums[0]);  // 999 ← 变了！
+        System.out.println(nums.length);  // 3 ← 还是3，不是新数组！
+    }
+}
+```
+
+```typescript
+// 对比 TypeScript
+function changeNum(x: number): void {
+    x = 999;  // 同样不影响外部
+}
+
+function changeArr(arr: number[]): void {
+    arr[0] = 999;  // 影响外部（同一个引用）
+    arr = [1, 2, 3];  // 不影响外部（新引用）
+}
+
+// TS/JS 同样是值传递（共享引用）—— 这一点和 Java 一致！
+```
+
+---
+
+### 📝 Day 2 实战练习
+
+**练习1：用 Java 重写 `groupBy`（TS 常见工具函数）**
+
+```typescript
+// TypeScript 版
+function groupBy<T, K extends string | number | symbol>(
+    items: T[],
+    keyFn: (item: T) => K
+): Record<K, T[]> {
+    const result = {} as Record<K, T[]>;
+    for (const item of items) {
+        const key = keyFn(item);
+        (result[key] ??= []).push(item);
+    }
+    return result;
+}
+
+// 使用
+const users = [
+    { name: "Alice", role: "admin" },
+    { name: "Bob", role: "user" },
+    { name: "Charlie", role: "admin" },
+];
+const grouped = groupBy(users, u => u.role);
+// { admin: [{name:"Alice",...}, {name:"Charlie",...}], user: [{name:"Bob",...}] }
+```
+
+```java
+// Java 版
+import java.util.*;
+
+public class CollectionUtils {
+    // Record 是 JDK 14+ 不可变数据载体，这里用作结果的条目类型
+    public record User(String name, String role) {}
+
+    public static Map<String, List<User>> groupBy(
+            List<User> items,
+            java.util.function.Function<User, String> keyFn) {
+
+        Map<String, List<User>> result = new HashMap<>();
+        for (User item : items) {
+            String key = keyFn.apply(item);
+            // computeIfAbsent：如果 key 不存在，创建一个新 ArrayList
+            result.computeIfAbsent(key, k -> new ArrayList<>()).add(item);
+        }
+        return result;
+    }
+
+    public static void main(String[] args) {
+        List<User> users = List.of(
+            new User("Alice", "admin"),
+            new User("Bob", "user"),
+            new User("Charlie", "admin")
+        );
+
+        Map<String, List<User>> grouped = groupBy(users, User::role);
+        // User::role 是方法引用，等价于 user -> user.role()
+        System.out.println(grouped);
+    }
+}
+```
+
+**🧠 关键对比：**
+
+| 概念 | TypeScript | Java | 
+|------|-----------|------|
+| 函数作为参数 | `(item: T) => K` | `Function<T, R>` 函数式接口 |
+| 箭头函数 | `u => u.role` | `User::role`（方法引用）或 `u -> u.role()`（Lambda） |
+| Record/Map | `{} as Record<K, T[]>` | `new HashMap<>()` |
+| 惰性初始化 | `(result[key] ??= [])` | `computeIfAbsent(key, k -> new ArrayList<>())` |
+
+---
+
+# 📅 Day 3（8h）：集合框架 + 异常处理 + 实战
+
+## 🎯 今日目标
+- 掌握 List / Map / Set 三大集合
+- 理解 Java 异常体系（受检异常！）
+- 实战：用 Java 重写 `debounce`、`deepClone`
+
+---
+
+## ⏰ 上午（4h）：集合框架
+
+### 1. List —— 类比 Array
+
+```java
+import java.util.*;
+
+// ============ ArrayList（最常用）—— 类比 TS 的 Array ============
+List<String> names = new ArrayList<>();
+names.add("Alice");          // 类比 push()
+names.add("Bob");
+names.add(0, "Charlie");     // 在索引0插入
+String first = names.get(0); // 类比 names[0]
+int size = names.size();     // 类比 names.length ← 注意！size()是方法！
+names.remove("Bob");         // 删除元素
+names.contains("Alice");     // 类比 includes()
+names.isEmpty();             // 类比 length === 0
+
+// 遍历
+for (String name : names) { }                    // 增强 for
+names.forEach(name -> System.out.println(name)); // Lambda（JDK 8+）
+
+// ============ 不可变 List（JDK 9+）============
+List<String> immutableList = List.of("A", "B", "C");
+// immutableList.add("D");  // ❌ 抛异常！
+```
+
+```typescript
+// 对比 TypeScript
+const names: string[] = [];
+names.push("Alice");
+const first = names[0];
+const size = names.length;  // 属性，不是方法！
+names.splice(names.indexOf("Bob"), 1);
+names.includes("Alice");
+```
+
+### 2. Map —— 类比 Map / Object
+
+```java
+// ============ HashMap（最常用）============
+Map<String, Integer> scores = new HashMap<>();
+scores.put("Alice", 95);              // 类比 map.set("Alice", 95)
+scores.put("Bob", 87);
+int aliceScore = scores.get("Alice"); // 类比 map.get("Alice")
+// 如果 key 不存在，get() 返回 null！← 注意 NPE 风险
+
+// 安全获取
+int score = scores.getOrDefault("Charlie", 0);  // 不存在返回默认值
+
+// 遍历
+for (Map.Entry<String, Integer> entry : scores.entrySet()) {
+    System.out.println(entry.getKey() + ": " + entry.getValue());
+}
+// 或者
+scores.forEach((key, value) -> System.out.println(key + ": " + value));
+
+// 不可变 Map
+Map<String, Integer> immutableMap = Map.of("Alice", 95, "Bob", 87);
+```
+
+### 3. Set —— 类比 Set
+
+```java
+// ============ HashSet ============
+Set<String> tags = new HashSet<>();
+tags.add("Java");
+tags.add("Spring");
+tags.add("Java");          // 重复，不会添加
+tags.size();               // 2
+tags.contains("Java");     // true
+
+// 去重神器
+List<String> dupList = Arrays.asList("A", "B", "A", "C", "B");
+Set<String> unique = new HashSet<>(dupList);  // {A, B, C}
+```
+
+### 📊 集合 API 速查表（类比前端）
+
+| 操作 | TypeScript | Java |
+|------|-----------|------|
+| 添加 | `arr.push(x)` | `list.add(x)` |
+| 获取 | `arr[i]` | `list.get(i)` |
+| 长度 | `arr.length` | `list.size()` |
+| 删除 | `arr.splice(i,1)` | `list.remove(i)` |
+| 包含 | `arr.includes(x)` | `list.contains(x)` |
+| Map存 | `map.set(k,v)` | `map.put(k,v)` |
+| Map取 | `map.get(k)` | `map.get(k)` |
+| Map是否有 | `map.has(k)` | `map.containsKey(k)` |
+| 遍历 | `for...of` / `forEach` | `for(:)` / `forEach` |
+| 不可变 | `Object.freeze()` | `List.of()` / `Map.of()` |
+
+---
+
+## ⏰ 下午（4h）：异常处理 + 实战
+
+### 1. Java 异常体系 —— **受检异常是 TS 没有的概念！**
+
+```
+Throwable
+├── Error（严重问题，不处理）—— 类比 JS 的不可恢复错误
+└── Exception
+    ├── RuntimeException（非受检异常）—— 类比 TS 的普通 Error
+    │   ├── NullPointerException  ← null.xxx()
+    │   ├── IndexOutOfBoundsException  ← list.get(999)
+    │   └── IllegalArgumentException
+    └── 受检异常（Checked Exception）—— TS 完全没有！
+        ├── IOException
+        ├── SQLException
+        └── 等等...必须显式处理！
+```
+
+**受检异常（Checked Exception）—— Java 独有的概念：**
+
+```java
+// ❌ 编译不通过！必须处理 IOException
+public void readFile() {
+    FileReader reader = new FileReader("test.txt");  // 编译错误！
+}
+
+// ✅ 方式一：try-catch
+public void readFile() {
+    try {
+        FileReader reader = new FileReader("test.txt");
+    } catch (IOException e) {
+        System.out.println("文件读取失败: " + e.getMessage());
+    }
+}
+
+// ✅ 方式二：throws 向上抛出
+public void readFile() throws IOException {
+    FileReader reader = new FileReader("test.txt");
+}
+// 调用方也必须处理或继续 throws
+```
+
+```typescript
+// TypeScript 没有受检异常，一切运行时见
+function readFile() {
+    const reader = fs.readFileSync("test.txt");  // 不强制处理
+}
+// TS 中你完全可以不 try-catch，运行时崩了再说
+```
+
+### 2. try-catch-finally + try-with-resources
+
+```java
+// 传统写法
+BufferedReader reader = null;
+try {
+    reader = new BufferedReader(new FileReader("test.txt"));
+    String line = reader.readLine();
+} catch (IOException e) {
+    e.printStackTrace();
+} finally {
+    if (reader != null) {
+        try { reader.close(); } catch (IOException e) { }
+    }
+}
+
+// try-with-resources（JDK 7+，自动关闭资源！类比 TS 的 using 提案）
+try (BufferedReader reader = new BufferedReader(new FileReader("test.txt"))) {
+    String line = reader.readLine();
+} catch (IOException e) {
+    e.printStackTrace();
+}  // reader 自动 close()，不需要 finally！
+```
+
+---
+
+### 📝 Day 3 实战练习
+
+**练习2：用 Java 实现 Builder 模式（对比 TS 链式调用）**
+
+```typescript
+// TypeScript —— 链式调用写配置
+class ApiClient {
+    private baseUrl: string = "";
+    private timeout: number = 5000;
+    private retries: number = 3;
+
+    setBaseUrl(url: string): this {
+        this.baseUrl = url;
+        return this;  // 返回 this 实现链式
+    }
+
+    setTimeout(ms: number): this {
+        this.timeout = ms;
+        return this;
+    }
+
+    setRetries(n: number): this {
+        this.retries = n;
+        return this;
+    }
+
+    build() {
+        return { baseUrl: this.baseUrl, timeout: this.timeout, retries: this.retries };
+    }
+}
+
+const client = new ApiClient()
+    .setBaseUrl("https://api.example.com")
+    .setTimeout(10000)
+    .setRetries(5)
+    .build();
+```
+
+```java
+// Java —— 两种方式实现 Builder
+
+// 方式一：手写 Builder（Lombok @Builder 就是自动生成这个）
+public class ApiClient {
+    private final String baseUrl;
+    private final int timeout;
+    private final int retries;
+
+    // 私有构造函数，只能通过 Builder 创建
+    private ApiClient(Builder builder) {
+        this.baseUrl = builder.baseUrl;
+        this.timeout = builder.timeout;
+        this.retries = builder.retries;
+    }
+
+    // 静态内部 Builder 类
+    public static class Builder {
+        private String baseUrl = "";
+        private int timeout = 5000;
+        private int retries = 3;
+
+        public Builder baseUrl(String baseUrl) {
+            this.baseUrl = baseUrl;
+            return this;
+        }
+
+        public Builder timeout(int timeout) {
+            this.timeout = timeout;
+            return this;
+        }
+
+        public Builder retries(int retries) {
+            this.retries = retries;
+            return this;
+        }
+
+        public ApiClient build() {
+            return new ApiClient(this);
+        }
+    }
+
+    // 使用
+    public static void main(String[] args) {
+        ApiClient client = new ApiClient.Builder()
+            .baseUrl("https://api.example.com")
+            .timeout(10000)
+            .retries(5)
+            .build();
+    }
+}
+
+// 方式二：Lombok 一行搞定！
+import lombok.Builder;
+import lombok.Data;
+
+@Data
+@Builder
+public class ApiClient {
+    private String baseUrl;
+    private int timeout;
+    private int retries;
+}
+// 使用时：ApiClient.builder().baseUrl("...").timeout(10000).build();
+```
+
+---
+
+# 📅 Day 4（8h）：面向对象（OOP）—— Java 的灵魂
+
+## 🎯 今日目标
+- 掌握类、对象、构造器、this
+- 理解继承、多态、重载 vs 重写
+- 理解 interface 和 abstract class 的使用场景
+- **掌握 Lombok 注解**
+
+---
+
+## ⏰ 上午（4h）：类、继承、多态
+
+### 1. 类与对象 —— 和 TS 基本一致但更严格
+
+```java
+// ============ Java 类定义 ============
+public class Person {
+    // 字段（属性）
+    private String name;      // private：只有本类能访问
+    private int age;
+    public static String species = "Homo sapiens";  // 静态字段（类变量）
+
+    // 构造器（没有返回类型，名字必须和类名相同）
+    public Person(String name, int age) {
+        this.name = name;     // this 指向当前实例
+        this.age = age;
+    }
+
+    // 重载构造器（Overload）—— TS 没有！
+    public Person(String name) {
+        this(name, 0);        // 调用另一个构造器
+    }
+
+    // Getter / Setter（封装）
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public int getAge() { return age; }
+}
+```
+
+```typescript
+// 对比 TypeScript
+class Person {
+    static species = "Homo sapiens";
+    private name: string;
+    private age: number;
+
+    constructor(name: string, age: number) {
+        this.name = name;
+        this.age = age;
+    }
+    // TS 不支持构造器重载！需要用可选参数或工厂函数代替
+}
+```
+
+### 2. 继承与多态
+
+```java
+// ============ 继承 ============
+public class Student extends Person {
+    private String school;
+
+    public Student(String name, int age, String school) {
+        super(name, age);    // 调用父类构造器，必须放在第一行！
+        this.school = school;
+    }
+
+    @Override  // 注解：告诉编译器我是重写，不是重载
+    public String getName() {
+        return "Student: " + super.getName();  // super 调用父类方法
+    }
+}
+```
+
+**🧠 重载（Overload）vs 重写（Override）—— 面试高频题：**
+
+| 维度 | 重载（Overload） | 重写（Override） |
+|------|-----------------|-----------------|
+| 发生位置 | **同一个类**内 | **子类**重写父类 |
+| 参数列表 | **必须不同** | 必须相同 |
+| 返回类型 | 可以不同 | 相同或子类型 |
+| 注解 | 无 | `@Override` |
+| TS有吗？ | ❌ TS 不支持 | ✅ `override` 关键字 |
+
+### 3. 抽象类 vs 接口
+
+```java
+// ============ 抽象类：有状态，有实现 ============
+public abstract class Animal {
+    protected String name;  // 可以有字段
+
+    public Animal(String name) { this.name = name; }
+
+    public abstract void makeSound();  // 抽象方法，子类必须实现
+
+    public void sleep() {  // 可以有具体方法
+        System.out.println(name + " is sleeping");
+    }
+}
+
+// ============ 接口：纯契约，无状态 ============
+public interface Flyable {
+    void fly();  // 默认 public abstract
+
+    // default 方法（JDK 8+）—— TS 没有！
+    default void land() {
+        System.out.println("Landing...");
+    }
+}
+
+// ============ 使用 ============
+public class Bird extends Animal implements Flyable {
+    public Bird(String name) { super(name); }
+
+    @Override
+    public void makeSound() { System.out.println("Chirp!"); }
+
+    @Override
+    public void fly() { System.out.println(name + " is flying!"); }
+}
+```
+
+**🆚 何时用接口、何时用抽象类？**
+
+| 场景 | 用接口 | 用抽象类 |
+|------|-------|---------|
+| 定义能力/行为契约 | ✅ `Runnable`, `Comparable` | ❌ |
+| 有共享状态（字段） | ❌ 接口无字段 | ✅ |
+| 有部分共享实现 | `default` 方法（有限） | ✅ |
+| 多继承 | ✅ 可实现多个接口 | ❌ 只能单继承 |
+| TS 类比 | `interface` | `abstract class` |
+
+---
+
+## ⏰ 下午（4h）：Lombok 详解 + 实战
+
+### Lombok —— Java 开发效率神器
+
+Lombok 通过**编译时注解**自动生成样板代码。类比 TS 中你手写的 class 构造函数/getter/setter。
+
+```java
+// ❌ 没有 Lombok 的 Java
+public class User {
+    private Long id;
+    private String username;
+    private String email;
+    private LocalDateTime createTime;
+
+    // 需要手写：空构造器、全参构造器、getter×4、setter×4、toString、equals、hashCode
+    // ≈ 100+ 行代码！
+}
+
+// ✅ 有 Lombok
+import lombok.*;
+
+@Data                    // @Getter + @Setter + @ToString + @EqualsAndHashCode + @RequiredArgsConstructor
+@Builder                 // Builder 模式
+@NoArgsConstructor       // 无参构造器
+@AllArgsConstructor      // 全参构造器
+public class User {
+    private Long id;
+    private String username;
+    private String email;
+    private LocalDateTime createTime;
+}
+// 编译后自动生成所有方法，.class 文件包含完整代码！
+```
+
+**Lombok 常用注解速查表：**
+
+| 注解 | 生成什么 | 何时用 |
+|------|---------|--------|
+| `@Data` | Getter + Setter + toString + equals + hashCode | 实体类标配 |
+| `@Getter` / `@Setter` | 单独生成 get/set | 需要部分控制 |
+| `@Builder` | Builder 模式内部类 | 复杂对象构建 |
+| `@NoArgsConstructor` | 无参构造器 | 序列化/反射需要 |
+| `@AllArgsConstructor` | 全参构造器 | 配合 Builder |
+| `@RequiredArgsConstructor` | final字段构造器 | 配合依赖注入 |
+| `@Slf4j` | log 对象 | 日志（类比 console） |
+| `@ToString` | toString() | 调试输出 |
+
+```java
+// @Slf4j 使用示例 —— 类比 console.log
+@Slf4j
+public class UserService {
+    public void createUser(String name) {
+        log.info("Creating user: {}", name);   // 类比 console.log
+        log.debug("Debug info...");
+        log.error("Something wrong!", new RuntimeException());
+    }
+}
+```
+
+---
+
+### 📝 Day 4 实战练习
+
+```java
+// 用 Lombok 定义完整的数据模型
+import lombok.*;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Article {
+    private Long id;
+    private String title;
+    private String content;
+    private Long authorId;
+
+    @Builder.Default              // Builder 模式下的默认值
+    private Integer viewCount = 0;
+
+    @Builder.Default
+    private List<String> tags = List.of();
+
+    private LocalDateTime createTime;
+
+    @Builder.Default
+    private Boolean published = false;
+}
+
+// 使用
+Article article = Article.builder()
+    .title("Java入门指南")
+    .content("这是一篇入门文章...")
+    .authorId(1L)
+    .tags(List.of("Java", "入门"))
+    .published(true)
+    .build();
+```
+
+```typescript
+// 对比 TypeScript（需要 class-transformer + class-validator 才能达到类似效果）
+interface Article {
+    id: number;
+    title: string;
+    content: string;
+    authorId: number;
+    viewCount: number;
+    tags: string[];
+    createTime: Date;
+    published: boolean;
+}
+
+// TS 中 Builder 模式不太常见，更倾向于直接对象
+const article: Article = {
+    id: 1,
+    title: "Java入门指南",
+    content: "这是一篇入门文章...",
+    authorId: 1,
+    viewCount: 0,
+    tags: ["Java", "入门"],
+    createTime: new Date(),
+    published: true,
+};
+```
+
+---
+
+# 📅 Day 5（8h）：Java 现代特性（JDK 17-21）
+
+## 🎯 今日目标
+- 掌握 Record（不可变数据载体）
+- 掌握 Stream API（函数式集合操作）
+- 理解 Pattern Matching + Switch 表达式
+- 了解 Virtual Threads
+- 了解 Sealed Classes、Text Blocks
+
+---
+
+## ⏰ 上午（4h）：Record + Stream API
+
+### 1. Record —— 不可变数据载体
+
+```java
+// ============ Record（JDK 14+，正式 JDK 16+）============
+// 一行定义不可变数据类！自动生成：构造器、getter、equals、hashCode、toString
+public record UserDTO(Long id, String name, String email) {}
+
+// 使用
+UserDTO user = new UserDTO(1L, "Alice", "alice@example.com");
+Long id = user.id();        // 访问器方法：字段名()，不是 getId()！
+String name = user.name();
+// user.name = "Bob";       // ❌ 编译错误！Record 不可变
+
+// Record 可以有额外方法
+public record Point(int x, int y) {
+    // 紧凑构造器（验证逻辑）
+    public Point {
+        if (x < 0 || y < 0) throw new IllegalArgumentException("坐标不能为负");
+    }
+    // 实例方法
+    public double distanceFromOrigin() {
+        return Math.sqrt(x * x + y * y);
+    }
+}
+```
+
+```typescript
+// 对比 TypeScript —— Record 就像只读对象类型
+type UserDTO = {
+    readonly id: number;
+    readonly name: string;
+    readonly email: string;
+};
+
+const user: UserDTO = { id: 1, name: "Alice", email: "alice@example.com" };
+// user.name = "Bob";  // ❌ TS 编译错误（如果 strict 模式）
+```
+
+**🧠 Record 使用场景：** DTO（数据传输对象）、配置对象、返回值——**替代 Lombok 的 @Data 当数据不可变时**。
+
+### 2. Stream API —— 类比 JS 的 map/filter/reduce
+
+这是 **Java 8+ 最重要的特性**，也是前端同学最容易上手的部分！
+
+```java
+import java.util.*;
+import java.util.stream.*;
+
+// ============ 数据准备 ============
+List<UserDTO> users = List.of(
+    new UserDTO(1L, "Alice", "alice@example.com"),
+    new UserDTO(2L, "Bob", "bob@example.com"),
+    new UserDTO(3L, "Charlie", "charlie@example.com"),
+    new UserDTO(4L, "Diana", "diana@example.com"),
+    new UserDTO(5L, "Eve", "eve@example.com")
+);
+```
+
+**一对一对照表：**
+
+```java
+// ===== filter —— 和 JS 一模一样！ =====
+List<UserDTO> admins = users.stream()
+    .filter(u -> u.name().startsWith("A"))     // 类比 .filter(u => u.name.startsWith("A"))
+    .toList();                                  // 类比：收集结果
+// 结果：[Alice]
+
+// ===== map —— 和 JS 一模一样！ =====
+List<String> names = users.stream()
+    .map(UserDTO::name)                        // 类比 .map(u => u.name)
+    .toList();
+// 结果：["Alice", "Bob", "Charlie", "Diana", "Eve"]
+
+// ===== sorted —— 类比 .sort() =====
+List<UserDTO> sorted = users.stream()
+    .sorted(Comparator.comparing(UserDTO::name))  // 类比 .sort((a,b) => a.name.localeCompare(b.name))
+    .toList();
+
+// ===== collect —— 类比 reduce + Map =====
+Map<Long, String> userMap = users.stream()
+    .collect(Collectors.toMap(
+        UserDTO::id,      // key：类比 u => u.id
+        UserDTO::name     // value：类比 u => u.name
+    ));
+// 结果：{1=Alice, 2=Bob, 3=Charlie, 4=Diana, 5=Eve}
+
+// ===== groupingBy —— 类比 groupBy =====
+Map<Character, List<UserDTO>> byFirstLetter = users.stream()
+    .collect(Collectors.groupingBy(u -> u.name().charAt(0)));
+// 结果：{A=[Alice], B=[Bob], C=[Charlie], D=[Diana], E=[Eve]}
+
+// ===== flatMap —— 类比 .flatMap() =====
+List<String> allTags = articles.stream()
+    .flatMap(a -> a.getTags().stream())        // 类比 .flatMap(a => a.tags)
+    .distinct()                                 // 去重
+    .toList();
+
+// ===== reduce —— 类比 .reduce() =====
+int totalLength = names.stream()
+    .mapToInt(String::length)                  // mapToInt 返回 IntStream
+    .sum();                                     // 也可以用 .reduce(0, Integer::sum)
+```
+
+```typescript
+// 对比 TypeScript（几乎完全对应！）
+const userMap = new Map(
+    users.map(u => [u.id, u.name] as const)
+);
+
+const byFirstLetter = Object.groupBy?.(users, u => u.name[0]);
+// 或手动：
+const byFirstLetter = users.reduce((acc, u) => {
+    (acc[u.name[0]] ??= []).push(u);
+    return acc;
+}, {} as Record<string, UserDTO[]>);
+```
+
+**🧠 Stream API 核心概念：**
+
+```
+数据源.stream()
+    → 中间操作（惰性，返回 Stream，可链式调用）
+        .filter()    ← 过滤
+        .map()       ← 转换
+        .sorted()    ← 排序
+        .distinct()  ← 去重
+        .limit()     ← 截取
+        .skip()      ← 跳过
+        .flatMap()   ← 展平
+    → 终端操作（触发执行，返回结果）
+        .toList()    ← 转 List
+        .collect()   ← 收集为任意集合
+        .forEach()   ← 遍历
+        .count()     ← 计数
+        .findFirst() ← 找第一个
+        .anyMatch()  ← 是否存在
+```
+
+---
+
+## ⏰ 下午（4h）：Pattern Matching + 其他现代特性
+
+### 1. Pattern Matching（JDK 17+）
+
+```java
+// ============ instanceof 模式匹配 ============
+// 老式写法
+if (obj instanceof String) {
+    String s = (String) obj;
+    System.out.println(s.length());
+}
+
+// 新式写法（JDK 17+）—— 一步到位！
+if (obj instanceof String s) {        // 自动转型 + 命名
+    System.out.println(s.length());
+}
+
+// ============ Switch 模式匹配（JDK 17+）============
+Object value = "Hello";
+
+String result = switch (value) {
+    case Integer i    -> "整数: " + i;       // 自动提取
+    case String s     -> "字符串长度: " + s.length();
+    case null         -> "是 null";
+    default           -> "未知类型";
+};
+```
+
+```typescript
+// 对比 TypeScript —— discriminated union + switch
+type Value = number | string | null;
+
+function handle(value: Value): string {
+    switch (typeof value) {
+        case "number": return `整数: ${value}`;
+        case "string": return `字符串长度: ${value.length}`;
+        case "undefined": return "是 null/undefined";
+        default: return "未知类型";
+    }
+}
+```
+
+### 2. Sealed Classes（JDK 17+）—— 类比 TS 的 Union Type
+
+```java
+// 密封类：只允许指定的子类继承
+public sealed class Result<T>
+    permits Success, Error {
+}
+
+public record Success<T>(T data) extends Result<T> {}
+public record Error(String message) extends Result<T> {}
+
+// 使用时，编译器知道只有两种可能！
+String output = switch (result) {
+    case Success<T> s -> "成功: " + s.data();
+    case Error e      -> "失败: " + e.message();
+    // 不需要 default！编译器知道已穷尽
+};
+```
+
+```typescript
+// 对比 TypeScript Union Type
+type Result<T> = 
+    | { type: "success"; data: T }
+    | { type: "error"; message: string };
+
+function handle<T>(result: Result<T>): string {
+    switch (result.type) {
+        case "success": return `成功: ${result.data}`;
+        case "error": return `失败: ${result.message}`;
+        // TypeScript 也能做穷尽检查
+    }
+}
+```
+
+### 3. Text Blocks（JDK 15+）
+
+```java
+// 老式写法
+String json = "{\n" +
+              "  \"name\": \"Alice\",\n" +
+              "  \"age\": 25\n" +
+              "}";
+
+// Text Blocks（类比 TS 模板字符串）
+String json = """
+    {
+      "name": "Alice",
+      "age": 25
+    }
+    """;
+
+// 类比 TypeScript
+const json = `
+{
+  "name": "Alice",
+  "age": 25
+}
+`;
+```
+
+### 4. Virtual Threads（JDK 21）
+
+```java
+// 传统线程（重量级，1个线程≈1MB栈内存）
+new Thread(() -> {
+    System.out.println("Hello from platform thread");
+}).start();
+
+// 虚拟线程（JDK 21，轻量级！可以创建百万个）
+Thread.startVirtualThread(() -> {
+    System.out.println("Hello from virtual thread!");
+});
+
+// 类比 TypeScript 的 async/await
+// Java 虚拟线程实现了"用同步写法写异步代码"，和 async/await 理念一致
+```
+
+---
+
+# 📅 Day 6（8h）：Maven 深度学习
+
+## 🎯 今日目标
+- 理解 pom.xml 和 package.json 的对应关系
+- 掌握 Maven 生命周期
+- 搭建多模块 Maven 项目
+
+---
+
+## ⏰ 全天（8h）：Maven 从入门到会用
+
+### 1. Maven vs npm —— 概念对照
+
+```
+npm 生态                          Maven 生态
+────────                          ─────────
+package.json          ←→         pom.xml
+node_modules/         ←→         ~/.m2/repository/（本地仓库）
+npm install           ←→         mvn compile（自动下载依赖）
+npm registry          ←→         Maven Central（中央仓库）
+dependencies          ←→         <dependencies>
+devDependencies       ←→         <scope>test</scope>
+npx                   ←→         mvn exec:java
+npm run build         ←→         mvn compile / mvn package
+npm run test          ←→         mvn test
+package-lock.json     ←→         pom.xml 本身锁定版本（+ <dependencyManagement>）
+pnpm workspace        ←→         <modules>（多模块）
+```
+
+### 2. pom.xml 核心结构
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 坐标（GAV）—— 类比 npm 的包名+版本 -->
+    <groupId>com.example</groupId>      <!-- 组织/公司域名倒写，类比 @scope -->
+    <artifactId>my-app</artifactId>      <!-- 项目名，类比 package.json 的 name -->
+    <version>1.0.0-SNAPSHOT</version>   <!-- 版本号，SNAPSHOT = 开发版 -->
+    <packaging>jar</packaging>          <!-- jar（默认）/ war / pom -->
+
+    <!-- 属性集中管理版本号 -->
+    <properties>
+        <java.version>21</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <mybatis-plus.version>3.5.7</mybatis-plus.version>
+    </properties>
+
+    <!-- 依赖 —— 类比 dependencies -->
+    <dependencies>
+        <!-- 每个 dependency 类比 npm 的一个包 -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+            <version>${mybatis-plus.version}</version>
+        </dependency>
+
+        <!-- scope 决定依赖范围 -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.34</version>
+            <scope>provided</scope>   <!-- 编译时需要，运行时由容器提供 -->
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.3</version>
+            <scope>test</scope>       <!-- 只在测试时可用，类比 devDependencies -->
+        </dependency>
+    </dependencies>
+
+    <!-- 构建配置 -->
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+**dependency scope 对照表：**
+
+| Maven Scope | 含义 | npm 类比 |
+|-------------|------|---------|
+| `compile`（默认） | 编译+运行+打包都需要 | `dependencies` |
+| `provided` | 编译需要，运行时容器提供 | 类似 `peerDependencies` |
+| `runtime` | 编译不需要，运行时需要 | 运行时依赖 |
+| `test` | 仅测试需要 | `devDependencies` |
+
+### 3. Maven 生命周期
+
+```
+mvn clean      → 清理 target/ 目录（类比 rm -rf dist/）
+mvn compile    → 编译源码（类比 tsc）
+mvn test       → 运行测试（类比 npm test / vitest）
+mvn package    → 打包成 jar/war（类比 npm run build）
+mvn install    → 安装到本地仓库 ~/.m2/（类比 npm link）
+mvn deploy     → 部署到远程仓库（类比 npm publish）
+```
+
+**生命周期是顺序的**：执行 `mvn package` 会依次执行 compile → test → package。
+
+### 4. 多模块项目
+
+```
+my-blog/                        ← 父模块（packaging=pom）
+├── pom.xml                     ← 父 POM，统一管理版本
+├── blog-common/                ← 公共模块（工具类、统一响应）
+│   └── pom.xml
+├── blog-entity/                ← 实体模块
+│   └── pom.xml
+├── blog-mapper/                ← 数据访问层
+│   └── pom.xml
+└── blog-web/                   ← Web 层（Controller + 启动类）
+    └── pom.xml
+```
+
+```xml
+<!-- 父 pom.xml -->
+<groupId>com.blog</groupId>
+<artifactId>my-blog</artifactId>
+<version>1.0.0-SNAPSHOT</version>
+<packaging>pom</packaging>  <!-- 父模块必须是 pom -->
+
+<modules>
+    <module>blog-common</module>
+    <module>blog-entity</module>
+    <module>blog-mapper</module>
+    <module>blog-web</module>
+</modules>
+```
+
+```bash
+# 在父模块目录执行，自动处理模块间依赖顺序
+mvn clean install
+```
+
+---
+
+# 📅 Day 7（4h）：规范 + 复盘
+
+## 🎯 今日目标
+- 阿里巴巴 Java 开发手册速览
+- .gitignore 配置
+- 周检验 + 复盘
+
+---
+
+## ⏰ 上午（2h）：规范速览
+
+### 1. .gitignore 标准配置
+
+```gitignore
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Log
+*.log
+
+# Package
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+```
+
+### 2. 阿里巴巴 Java 开发手册 —— 核心规范速记
+
+| 规范 | 说明 | 为什么 |
+|------|------|--------|
+| 类名 `UpperCamelCase` | `UserController` | 和 TS 一样 |
+| 方法名 `lowerCamelCase` | `getUserById` | 和 TS 一样 |
+| 常量 `UPPER_SNAKE_CASE` | `MAX_RETRY_COUNT` | 和 TS 一样 |
+| 包名全小写 | `com.example.myapp` | 比前端的 kebab-case 更扁平 |
+| POJO 类用包装类型 | `Long id` 不用 `long` | null 表示未赋值 |
+| `equals` 先判空 | `"xx".equals(str)` 或 `Objects.equals()` | 防 NPE |
+| 集合用 `isEmpty()` | `list.isEmpty()` 而非 `list.size() == 0` | 更清晰 |
+
+---
+
+## ⏰ 下午（2h）：Week 1 检验 + 复盘
+
+### ✅ 检验清单
+
+- [ ] F5 能调试 Java 程序，无任何配置报错
+- [ ] 能手写 Java 实现循环、条件、方法调用，不查语法
+- [ ] 理解 `==` vs `.equals()`，不会再踩坑
+- [ ] 能用 Stream API 的 filter/map/collect 完成数据处理
+- [ ] 能写 Record + Lombok @Data @Builder
+- [ ] 理解 Overload vs Override
+- [ ] 能独立创建 Maven 项目、添加依赖、`mvn compile` 成功
+- [ ] 理解 Checked Exception 和 TS 的差异
+- [ ] 能用 Java 写出 groupBy / Builder 模式
+
+### 📝 最终检验代码
+
+```java
+// 综合练习：处理用户数据
+import java.util.*;
+import java.util.stream.*;
+
+public record UserVO(Long id, String name, String role, Integer age) {}
+
+public class WeekOneCheck {
+    public static void main(String[] args) {
+        List<UserVO> users = List.of(
+            new UserVO(1L, "Alice", "admin", 30),
+            new UserVO(2L, "Bob", "user", 25),
+            new UserVO(3L, "Charlie", "admin", 35),
+            new UserVO(4L, "Diana", "user", 28),
+            new UserVO(5L, "Eve", "moderator", 32)
+        );
+
+        // 1. 找出所有 admin
+        List<UserVO> admins = users.stream()
+            .filter(u -> u.role().equals("admin"))
+            .toList();
+        System.out.println("Admins: " + admins);
+
+        // 2. 按角色分组
+        Map<String, List<UserVO>> byRole = users.stream()
+            .collect(Collectors.groupingBy(UserVO::role));
+        System.out.println("By role: " + byRole);
+
+        // 3. 计算平均年龄
+        double avgAge = users.stream()
+            .mapToInt(UserVO::age)
+            .average()
+            .orElse(0);
+        System.out.println("Average age: " + avgAge);
+
+        // 4. 找年龄最大的用户
+        UserVO oldest = users.stream()
+            .max(Comparator.comparingInt(UserVO::age))
+            .orElseThrow();
+        System.out.println("Oldest: " + oldest);
+
+        System.out.println("🎉 Week 1 检验通过！");
+    }
+}
+```
+
+---
+
+## 📊 Week 1 核心对比总结表
+
+| 概念 | TypeScript | Java | 关键差异 |
+|------|-----------|------|---------|
+| 类型系统 | 结构化类型 + 动态 | 名义类型 + 静态 | Java 编译时确定 |
+| 数字类型 | `number` 一个 | `int/long/float/double` 多个 | Java 需要选对 |
+| 空值 | `null` / `undefined` + `?.` | `null` + `Optional` | Java 无可选链 |
+| 字符串比较 | `===` 比较值 | `.equals()` 比较值 | `==` 比较引用！ |
+| 函数 | 一等公民 | 函数式接口 + Lambda | Java 不能直接把函数当参数传 |
+| 类 | `class` + `interface` + `type` | `class` + `interface` | Java 无 type alias |
+| 不可变对象 | `as const` + `readonly` | `Record` + `final` | Record 更简洁 |
+| 集合操作 | `map/filter/reduce` | `Stream.map/filter/collect` | 语法稍冗长但思想一致 |
+| 继承 | 单继承 + mixin | 单继承 + 多接口 | Java 无 mixin |
+| 异常 | 非受检 | 受检 + 非受检 | Java 强制处理部分异常 |
+| 包管理 | npm + package.json | Maven + pom.xml | 配置文件格式不同 |
+| 不可变集合 | 手动 Object.freeze | `List.of()` / `Map.of()` | Java 内置 |
+
+---
+
+## 🚀 下周预告
+
+Week 2 将进入 **Spring Boot 3 实战**——用 VS Code 创建第一个 Spring Boot 项目，连接 MySQL，搭建 Blog API。你会看到 Controller ↔ API Route、Service ↔ Server Action、MyBatis-Plus ↔ Prisma 的一一对应关系。**加油！** 🔥
+
+
