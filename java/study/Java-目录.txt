@@ -1,1101 +1,374 @@
-==================================== [[前端转Java]] ====================================
-
------------------------------- [1. 前端转Java] ------------------------------
-
-▶ SYSTEM: 
-
-You are a helpful assistant.
-
 ▶ USER: 
 
-搜索看看 最适合资深前端快速转java的项目是什么,做一个系统的规划出来,争取1个月速通java,做到可独立部署开发中小型应用,列一下4周的大概安排,这个安排要有大纲属性,后续会作为知识库源数据
-
-基于搜索结果和当前Java生态（2026年中），我为你策划了这份**资深前端→Java后端**的系统速通计划。核心思路：**用你已掌握的前端知识体系做类比锚点，只学"前端不会的东西"，缩短认知转换成本**。
-
----
-
-# 🔷 资深前端 → Java后端 1个月速通计划
-
-> **适用人群**：3年以上前端经验（熟悉 TypeScript/React/Vue、工程化、HTTP协议、RESTful设计）
-> **目标**：独立用 Spring Boot 3 开发部署中小型应用
-> **时间**：4周（约200小时，工作日4h + 周末8h）
-> **编写日期**：2026-06-30
-
----
-
-## 📋 一、技术栈选型（为什么这么选）
-
-| 维度 | 选型 | 类比前端 | 选型理由 |
-|------|------|----------|----------|
-| **语言版本** | Java 21 LTS | ES2024 | Virtual Threads、Record、Pattern Matching等现代特性 |
-| **框架** | Spring Boot 3.x | Next.js / Nuxt | 约定优于配置，一键启动，生态最全 |
-| **ORM** | MyBatis-Plus 3.5+ | Prisma（但更灵活） | 学习曲线低于JPA、灵活度高于JPA、国内主流 |
-| **构建工具** | Maven 3.9+ | npm/pnpm | 依赖管理、生命周期、插件生态 |
-| **数据库** | MySQL 8.0 + Redis 7 | localStorage + IndexedDB | 关系型+缓存，中小应用的标配 |
-| **认证** | Spring Security + JWT | NextAuth / Clerk | 无状态认证，前后端分离标配 |
-| **API文档** | SpringDoc OpenAPI (Swagger 3) | tRPC / 自动类型推导 | 自动生成接口文档，类型安全 |
-| **部署** | Docker + Nginx | Vercel / Netlify | 容器化部署，镜像即服务 |
-| **版本管理** | Git + GitHub Actions | 同前端 | CI/CD 自动化 |
-
----
-
-## 🗓️ 二、四周学习大纲
-
-```
-Week 1 ─────── Week 2 ─────── Week 3 ─────── Week 4
-  │               │               │               │
-  ▼               ▼               ▼               ▼
-Java语言       Spring Boot    安全+中间件    部署+实战
-+ 基础工具      + 数据库         + 项目实战     + 收尾
-```
-
----
-
-## 📘 WEEK 1：Java 语言 + 工程基础（50h）
-
-> **核心目标**：能用Java写出TypeScript中熟悉的逻辑，理解两者的根本差异
-> **锚点策略**：每个概念都跟TypeScript/JavaScript对比，快速建立心智模型
-
-### 1.1 环境搭建（4h）
-- [ ] **JDK 21 安装与配置**
-  - SDKMAN（类nvm）安装管理多JDK版本
-  - `JAVA_HOME`、`PATH` 环境变量 → 类比 Node.js 的 `NODE_PATH`
-  - `java`、`javac`、`jar` 命令初体验 → 类比 `node`、`tsc`
-- [ ] **Maven 安装与配置**
-  - `~/.m2/settings.xml` → 类比 `.npmrc`
-  - 中央仓库 vs 私有仓库 → 类比 npm registry
-  - `pom.xml` 核心结构初览（groupId/artifactId/version） → 类比 `package.json`
-- [ ] **IDE 选择**
-  - **IntelliJ IDEA Community**（首选，免费）→ 类比 VS Code 但更重型
-  - 必装插件：Lombok、MyBatisX、SonarLint
-  - 快捷键速查表整理
-
-### 1.2 Java 语法速通（18h）
-> **原则**：你已经是程序员，不需要从零学编程。重点放在Java与TS**不同的地方**。
-
-#### Day 2-3：基础语法 —— 类比TypeScript
-
-| 概念 | Java | TypeScript | 注意事项 |
-|------|------|------------|----------|
-| 类型系统 | `int`, `long`, `String`, `boolean` | `number`, `string`, `boolean` | Java是**强类型+静态**，比TS严格得多 |
-| 变量声明 | `var x = 10;`（局部类型推断） | `let x = 10` | Java的`var`≠JS的`var`！它是编译时类型推断 |
-| 不可变数据 | `final` + **Record**（JDK 14+） | `const` + `as const` + `readonly` | Record=`type X = {readonly a: string}` |
-| 空安全 | `Optional<T>` + `@Nullable` | `?` + `??` + 可选链 | Java没有 `?.`，需要用Optional链式调用 |
-| 接口/类型 | `interface` + `class` | `interface` + `type` | Java的interface可被implements，type≈sealed class |
-| 泛型 | `<T>` | `<T>` | 语法相似但Java是**编译时擦除**，有通配符`? extends/super` |
-| 异常处理 | `try-catch-finally` + checked exception | `try-catch-finally` | Java有**受检异常**（必须声明或捕获）——TS没有这个概念 |
-| 集合 | `List<T>`, `Map<K,V>`, `Set<T>` | `Array<T>`, `Map<K,V>`, `Set<T>` | 类似但API完全不同（`size()`不是`.length`） |
-
-- [ ] **实战练习**（每个1h，共6h）
-  1. 用Java重写你熟悉的TS工具函数（debounce、groupBy、deepClone）
-  2. 用Record+Stream API处理JSON数据列表
-  3. 实现一个简单的Builder模式（对比TS的链式调用）
-
-#### Day 4：面向对象（OOP）—— Java的灵魂
-- [ ] **类与对象**
-  - `class`、`constructor`、`this` → 和TS基本一致
-  - **重载**（Overload） → TS有但不同
-  - **static 方法/变量** → 一样
-- [ ] **继承与多态**
-  - `extends`（单继承） vs TS的`extends`（也是单继承，但可以用mixin）
-  - `@Override` 注解
-  - `abstract` 抽象类 → 类似TS的abstract class
-- [ ] **接口 vs 抽象类**
-  - `implements` 可实现多个接口
-  - JDK 8+ 接口的`default`方法 → TS没有直接对应
-  - **什么时候用接口、什么时候用抽象类**——这是Java面试高频题
-- [ ] **Lombok 必学**
-  ```java
-  @Data           // = @Getter + @Setter + @ToString + @EqualsAndHashCode
-  @Builder        // Builder模式
-  @AllArgsConstructor
-  @NoArgsConstructor
-  public class User {
-      private Long id;
-      private String name;
-  }
-  ```
-  → 对比：TS中用class-transformer + class-validator
-
-#### Day 5：Java 现代特性（JDK 17-21）
-- [ ] **Record**（JDK 14+，不可变数据载体） → 类比 `type User = {readonly id: number; readonly name: string}`
-- [ ] **Pattern Matching + Switch 表达式**（JDK 17+） → 类比TS的 discriminated union + switch
-- [ ] **Sealed Classes**（JDK 17+） → 类比TS的union type
-- [ ] **Virtual Threads**（JDK 21，虚拟线程） → 类比JS的Promise/async-await（但更轻量）
-- [ ] **Text Blocks**（JDK 15+，多行字符串） → 类比模板字符串 `` ` ` ``
-- [ ] **Stream API**（JDK 8+）→ 类比 JS 的 `Array.map/filter/reduce`
-
-### 1.3 Maven 深度学习（8h）
-- [ ] **pom.xml 核心标签**
-  - `<dependencies>` → 类比 `dependencies` in package.json
-  - `<dependencyManagement>` → 类比 pnpm workspace 的版本统一管理
-  - `<build>` + `<plugins>` → 类比 webpack/vite 配置
-  - `<parent>` → 类比 Nx/Turborepo 的根配置继承
-- [ ] **生命周期**
-  - `clean → compile → test → package → install → deploy`
-  - 类比 `clean → build → test → deploy`
-- [ ] **依赖范围 scope**
-  - `compile`（默认）、`provided`（容器提供）、`test`（仅测试）、`runtime`（运行时）
-  - 类比 devDependencies vs dependencies
-- [ ] **实践**：搭建一个多模块Maven项目
-
-### 1.4 Git 分支策略 + Java项目规范（4h）
-- [ ] **Git Flow / Trunk-Based** 回顾（前端已有基础，只需了解Java项目常见模式）
-- [ ] **阿里巴巴Java开发手册** 速览（约前3章）
-- [ ] **CheckStyle / SpotBugs** 静态代码检查（类比ESLint）
-- [ ] **.gitignore** 标准配置（target/、*.class、.idea/等）
-
-### 🧪 Week 1 检验标准
-- [ ] 能手写Java代码实现日常逻辑，不查语法书
-- [ ] 理解Java与TS在类型系统、OOP上的核心差异
-- [ ] 能独立创建Maven项目、添加依赖、运行测试
-- [ ] 能用Stream API完成集合操作
-- [ ] 理解Record、Lombok在项目中的使用场景
-
----
-
-## 📘 WEEK 2：Spring Boot 核心 + 数据库层（55h）
-
-> **核心目标**：用Spring Boot 3搭建一个完整的REST API，连接MySQL数据库
-> **锚点策略**：Spring Boot ≈ Next.js（约定优于配置，全栈框架），Controller ≈ API Route，Service ≈ Server Action
-
-### 2.1 Spring Boot 快速上手（12h）
-
-#### Spring Boot 分层架构 vs 前端分层
-```
-前端分层（Next.js）              Spring Boot分层
-─────────────────              ────────────────
-page / component               Controller  （接收请求、返回响应）
-   ↕                              ↕
-hooks / service / store   ≈    Service     （业务逻辑）
-   ↕                              ↕
-API fetch / axios               Repository  （数据访问）
-                                    ↕
-                               Entity/DTO   （数据模型）
-```
-
-- [ ] **第一个项目：start.spring.io**
-  - 选依赖：Spring Web、Lombok、MySQL Driver、MyBatis-Plus、Spring Security、Validation
-  - 类比：`npx create-next-app`
-- [ ] **项目结构解读**
-  ```
-  src/main/java/com/example/
-  ├── controller/     # 控制器层 = 前端的 pages/api 或 route handler
-  ├── service/        # 业务逻辑层 = 前端的 services/
-  ├── mapper/         # 数据访问层（MyBatis-Plus） = 前端的 api-client/
-  ├── entity/         # 实体类 = 前端的 types/
-  ├── dto/            # 数据传输对象 = 前端的 request/response types
-  ├── config/         # 配置类 = 前端的 config/
-  ├── common/         # 公共工具 = 前端的 utils/
-  └── exception/      # 全局异常处理 = 前端的 error handling
-  ```
-- [ ] **核心注解速记（每个都有前端对应）**
-  | 注解 | 作用 | 前端类比 |
-  |------|------|----------|
-  | `@SpringBootApplication` | 主入口 | `next.config.js` + `package.json` main |
-  | `@RestController` | REST控制器 | `export async function GET()` |
-  | `@RequestMapping("/api")` | 路径映射 | 文件路由 `/app/api/` |
-  | `@GetMapping / @PostMapping` | HTTP方法 | `export GET/POST` |
-  | `@RequestParam / @PathVariable` | 提取参数 | `req.query` / `req.params` |
-  | `@RequestBody` | 提取请求体 | `await req.json()` |
-  | `@Service` | 标记Service Bean | 普通class导出（无特殊标记） |
-  | `@Autowired` / 构造注入 | 依赖注入 | React Context / provide-inject |
-  | `@Configuration` | 配置类 | `next.config.js` |
-
-- [ ] **IoC / DI 深度理解（重点！）**
-  - Bean 容器 → 类比 React 的 Context 系统（但更底层）
-  - `@Autowired` 的三种注入方式（构造器 > setter > 字段）
-  - Bean生命周期：`@PostConstruct`、`@PreDestroy`
-  - Scope：singleton（默认）、prototype → 类比 React 的单例 vs 多实例
-
-### 2.2 MySQL 速通（10h）
-> **锚点策略**：你不需要成为DBA，只需要能达到"用Prisma操作PostgreSQL"同等的熟练度
-
-- [ ] **MySQL 安装**（Docker 一键）
-  ```bash
-  docker run -d --name mysql8 -p 3306:3306 \
-    -e MYSQL_ROOT_PASSWORD=root123 \
-    -e MYSQL_DATABASE=myapp \
-    mysql:8.0
-  ```
-- [ ] **SQL 必备（5h，以会用为准）**
-  - CRUD：`SELECT`、`INSERT`、`UPDATE`、`DELETE`
-  - 过滤排序：`WHERE`、`ORDER BY`、`LIMIT`、`OFFSET`
-  - 联表：`INNER JOIN`、`LEFT JOIN` → 类比 TS 的 `array1.flatMap(a => array2.filter(b => b.id === a.id))`
-  - 聚合：`COUNT`、`SUM`、`GROUP BY`、`HAVING`
-  - 索引：`CREATE INDEX` → 类比 JS Map 的 O(1)查找，为什么重要
-  - 事务：`BEGIN` → `COMMIT` / `ROLLBACK` → 类比 Prisma 的 `$transaction`
-- [ ] **Navicat / DBeaver** 使用（类比 Prisma Studio / TablePlus）
-
-### 2.3 MyBatis-Plus 实战（15h）
-> **锚点策略**：MyBatis-Plus ≈ Prisma 的 Schema + Query（但更灵活、更贴近SQL）
-
-- [ ] **核心概念**
-  - `BaseMapper<T>` → 自动获得CRUD方法（类比 Prisma 的 model.findMany/create/update/delete）
-  - `ServiceImpl<M, T>` → Service层的通用实现
-  - **代码生成器** → 自动生成 Entity/Mapper/Service/Controller（类比 Prisma generate）
-- [ ] **实体映射**
-  ```java
-  @Data
-  @TableName("user")           // 表名映射
-  public class User {
-      @TableId(type = IdType.AUTO)  // 主键自增
-      private Long id;
-      private String username;
-      @TableField(fill = FieldFill.INSERT)  // 自动填充
-      private LocalDateTime createTime;
-      @TableLogic                 // 逻辑删除（类比软删除）
-      private Integer deleted;
-  }
-  ```
-- [ ] **条件构造器（核心武器）**
-  ```java
-  // Lambda 方式（类型安全！类比 Prisma 的类型推断）
-  List<User> list = userMapper.selectList(
-      new LambdaQueryWrapper<User>()
-          .eq(User::getStatus, 1)
-          .like(User::getUsername, "admin")
-          .orderByDesc(User::getCreateTime)
-          .last("LIMIT 10")
-  );
-  ```
-- [ ] **分页插件配置** → 类比 Prisma 的 `skip/take`
-- [ ] **自动填充**（createTime、updateTime）
-- [ ] **逻辑删除**
-- [ ] **乐观锁**
-
-### 2.4 实战：搭建一个 Blog API（18h）
-- [ ] **Day 1-2**：用户模块
-  - User Entity + Mapper + Service + Controller
-  - 注册/登录接口（先不加密，先跑通流程）
-  - 参数校验 `@Valid` + `@NotNull/@NotBlank` → 类比 zod
-  - 全局异常处理 `@RestControllerAdvice` + `@ExceptionHandler`
-- [ ] **Day 3**：文章模块
-  - Article Entity + 关联用户
-  - CRUD接口 + 分页查询
-  - 统一响应格式封装 `Result<T>`
-- [ ] **Day 4**：分类/标签模块
-  - 多对多关系设计（article_tag中间表）
-  - MyBatis-Plus处理关联查询（`@ManyToMany` 或手写SQL）
-- [ ] **Day 5**：完善与联调
-  - 用 Apifox / Postman 测试所有接口
-  - 用你熟悉的Vue/React前端对接这个API（验证RESTful设计）
-  - 接入 SpringDoc OpenAPI → 自动生成Swagger文档
-
-### 🧪 Week 2 检验标准
-- [ ] 能独立从 start.spring.io 创建项目并跑起来
-- [ ] 理解三层架构（Controller→Service→Mapper）的分工
-- [ ] 能用MyBatis-Plus完成单表CRUD + 分页 + 条件查询
-- [ ] 能写出基本的联表SQL + 手写XML映射（复杂查询）
-- [ ] 理解IoC/DI的核心思想并能正确使用
-- [ ] Blog API 至少 15+ 个可用接口
-
----
-
-## 📘 WEEK 3：安全 + 中间件 + 进阶实战（55h）
-
-> **核心目标**：让Blog具备生产级特性——认证、缓存、文件上传、定时任务
-> **锚点策略**：每个中间件都有前端的对应概念
-
-### 3.1 Spring Security + JWT（15h）
-- [ ] **安全架构理解**
-  - Filter Chain（过滤器链）→ 类比 Next.js Middleware
-  - Authentication vs Authorization → 类比 NextAuth 的认证 vs 鉴权
-  - SecurityContext → 类比 React Context 中的用户状态
-- [ ] **JWT 完整流程**
-  ```
-  Client                    Server
-    │  POST /login            │
-    │  {username, password}   │
-    │ ──────────────────────> │  验证密码
-    │                         │  生成JWT（access + refresh）
-    │  {accessToken,          │
-    │   refreshToken}         │
-    │ <────────────────────── │
-    │                         │
-    │  GET /api/articles      │
-    │  Authorization:         │
-    │   Bearer <accessToken>  │
-    │ ──────────────────────> │  解析JWT → SecurityContext
-    │                         │  执行业务逻辑
-    │  200 {data: [...]}      │
-    │ <────────────────────── │
-  ```
-- [ ] **实操步骤**
-  1. 引入 `spring-boot-starter-security`
-  2. 自定义 `SecurityConfig`（SecurityFilterChain Bean）
-  3. 实现 `UserDetailsService`（从数据库加载用户）
-  4. 编写 JWT 工具类（生成、解析、校验）
-  5. 实现 JWT 认证过滤器 `OncePerRequestFilter`
-  6. 实现登录接口（返回JWT）
-  7. 配置权限注解 `@PreAuthorize`
-  8. 处理Token刷新机制
-- [ ] **密码加密**：`BCryptPasswordEncoder` → 类比 bcryptjs
-
-### 3.2 Redis 缓存实战（8h）
-- [ ] **安装**（Docker一键）
-- [ ] **Redis 5种数据结构** 与前端类比
-  | Redis类型 | 用途 | 前端类比 |
-  |-----------|------|----------|
-  | String | 缓存/计数器 | localStorage |
-  | Hash | 对象存储 | Map<string, object> |
-  | List | 消息队列 | Array (shift/unshift) |
-  | Set | 去重/标签 | Set |
-  | Sorted Set | 排行榜 | 排序的Map |
-- [ ] **Spring Cache + Redis**
-  - `@Cacheable` / `@CacheEvict` / `@CachePut` → 类比 React Query / SWR 的缓存策略
-  - 缓存热点文章、用户信息
-- [ ] **Redis 做分布式锁**（了解即可）
-- [ ] **实践**：用Redis缓存文章详情、排行榜Top10
-
-### 3.3 文件上传 + 静态资源（5h）
-- [ ] **Spring Boot 文件上传**
-  - `MultipartFile` 接收上传
-  - 本地存储 vs OSS（阿里云/腾讯云对象存储）
-  - 文件名校验、大小限制、类型白名单
-- [ ] **静态资源映射** `WebMvcConfigurer`
-- [ ] **实践**：文章封面图上传
-
-### 3.4 定时任务 + 异步处理（5h）
-- [ ] **`@Scheduled`** → 类比 `cron` / `setInterval`
-  - 定时清理过期Token
-  - 定时统计文章阅读量
-- [ ] **`@Async`** → 类比 `Promise.all` / 异步事件
-  - 发送邮件、短信（异步不阻塞主线程）
-  - 启用 Virtual Threads（JDK 21）
-    ```properties
-    spring.threads.virtual.enabled=true
-    ```
-
-### 3.5 综合实战：Blog 升级为生产版（22h）
-- [ ] **Day 1-2**：接入Spring Security + JWT，所有接口加认证
-- [ ] **Day 3**：接入Redis缓存 + 阅读量统计 + 排行榜
-- [ ] **Day 4**：文件上传（封面图）+ 全局日志AOP + 参数校验完善
-- [ ] **Day 5**：定时任务 + 异步邮件通知 + 完善Swagger文档
-
-### 🧪 Week 3 检验标准
-- [ ] 理解JWT认证全流程，能独立配置Spring Security
-- [ ] 能正确使用 `@Cacheable` 等缓存注解
-- [ ] 能实现文件上传到本地/OSS
-- [ ] 能写简单的定时任务和异步方法
-- [ ] Blog API 具备完整的安全认证 + 缓存 + 文件能力
-
----
-
-## 📘 WEEK 4：部署 + Docker + CI/CD + 收尾（50h）
-
-> **核心目标**：把Blog部署到服务器，可公网访问
-> **锚点策略**：Docker ≈ 超轻量VM，CI/CD ≈ Vercel的自动部署
-
-### 4.1 Docker 实战（12h）
-- [ ] **核心概念**
-  - Image（镜像）→ 类比 JS Bundle（构建产物）
-  - Container（容器）→ 类比 运行中的Node进程
-  - Dockerfile → 类比 `Dockerfile`（前端也有）
-  - docker-compose → 类比 `docker-compose.yml`（统管多个容器）
-- [ ] **编写 Dockerfile**（Spring Boot 3 最佳实践）
-  ```dockerfile
-  FROM eclipse-temurin:21-jre-alpine
-  WORKDIR /app
-  COPY target/*.jar app.jar
-  EXPOSE 8080
-  ENTRYPOINT ["java", "-jar", "app.jar"]
-  ```
-- [ ] **docker-compose.yml** 编排 MySQL + Redis + App
-- [ ] **多阶段构建**（maven打包 → 精简运行镜像）
-- [ ] **实践**：本地用docker-compose一键启动整个Blog系统
-
-### 4.2 服务器部署（10h）
-- [ ] **云服务器选择**
-  - 阿里云ECS / 腾讯云轻量（2核4G，约50-100元/月）
-  - 最低配置推荐：2核2G（Java应用比较吃内存）
-- [ ] **环境搭建**
-  - JDK 21 安装
-  - Docker + Docker Compose 安装
-  - Nginx 安装与反向代理配置
-  - SSL 证书（Let's Encrypt / acme.sh 自动续期）
-- [ ] **部署流程**
-  ```
-  Git Push → 服务器 Pull → Maven 打包 → Docker 重启
-  ```
-- [ ] **Nginx 配置**（API反向代理 + 前端静态资源）
-  ```nginx
-  server {
-      listen 443 ssl;
-      server_name api.yourdomain.com;
-      location /api/ {
-          proxy_pass http://localhost:8080/api/;
-      }
-  }
-  ```
-- [ ] **实践**：`yourdomain.com` 可公网访问 Blog API
-
-### 4.3 CI/CD（8h）
-- [ ] **GitHub Actions 自动化**
-  - push → 自动跑测试 → 自动打包 → 自动部署到服务器
-  - 类比 Vercel 的 git push → 自动部署
-- [ ] **实践**：推送代码后自动部署到服务器
-
-### 4.4 项目完善与复盘（20h）
-- [ ] **代码质量**
-  - 单元测试（JUnit 5 + Mockito）→ 类比 Vitest + vi.mock
-  - 集成测试（Testcontainers 真实MySQL/Redis测试）
-  - 测试覆盖率 > 60%
-- [ ] **性能优化**
-  - 数据库索引优化（慢查询分析）
-  - 接口响应时间 < 200ms
-  - N+1 查询问题排查
-- [ ] **监控与日志**
-  - Logback 日志配置 → 日志分级、滚动策略
-  - Spring Boot Actuator → 健康检查、指标监控
-- [ ] **文档完善**
-  - README.md（项目说明 + 启动方式 + API文档链接）
-  - Swagger UI 可访问的在线文档
-
-### 🧪 Week 4 检验标准（最终验收）
-- [ ] Blog 系统可通过公网域名访问
-- [ ] 前端（Vue/React）可正常调用所有接口
-- [ ] Docker-compose 一键启动所有服务
-- [ ] GitHub Actions 实现了自动化部署
-- [ ] 至少写了 10+ 个单元测试
-- [ ] 文档完善，别人照着README能跑起来
-
----
-
-## 🎯 三、推荐对标项目
-
-> 不是从零写，而是**先用起来再学会**——这是前端同学的舒适学习区
-
-### 入门参考（Week 1-2 阶段）
-| 项目 | 说明 |
-|------|------|
-| **[start.spring.io](https://start.spring.io)** | 官方项目初始化，从这开始 |
-| **[MyBatis-Plus 官方示例](https://github.com/baomidou/mybatis-plus-samples)** | 各种场景的Demo，覆盖90%日常需求 |
-| **[Spring Boot 官方 Guides](https://spring.io/guides)** | 15分钟一个主题，碎片时间学习 |
-
-### 进阶参考（Week 3-4 阶段）
-| 项目 | 说明 |
-|------|------|
-| **[RuoYi-Vue](https://gitee.com/y_project/RuoYi-Vue)** | 若依前后端分离版，Vue3+SpringBoot，国内最火的后台脚手架 |
-| **[RuoYi-Vue3](https://github.com/yangzongzhuan/RuoYi-Vue3)** | 若依Vue3前端版，搭配RuoYi-Vue后端 |
-| **[Snowy](https://gitee.com/xiaonuobase/snowy)** | 国产优秀SpringBoot3+Vue3后台，代码质量高 |
-
-### 最终目标项目（你的Blog「毕业设计」）
-```
-blog-server/
-├── pom.xml
-├── src/main/java/com/blog/
-│   ├── BlogApplication.java
-│   ├── controller/
-│   │   ├── AuthController.java        # 登录/注册
-│   │   ├── ArticleController.java     # 文章CRUD
-│   │   ├── CategoryController.java    # 分类管理
-│   │   ├── TagController.java         # 标签管理
-│   │   ├── UploadController.java      # 文件上传
-│   │   └── UserController.java        # 用户设置
-│   ├── service/
-│   │   ├── impl/
-│   │   ├── ArticleService.java
-│   │   ├── UserService.java
-│   │   └── ...
-│   ├── mapper/
-│   ├── entity/
-│   ├── dto/
-│   │   ├── request/                   # 入参DTO
-│   │   └── response/                  # 出参DTO
-│   ├── config/
-│   │   ├── SecurityConfig.java
-│   │   ├── MyBatisPlusConfig.java
-│   │   ├── RedisConfig.java
-│   │   └── CorsConfig.java
-│   ├── common/
-│   │   ├── Result.java                # 统一响应
-│   │   ├── GlobalExceptionHandler.java
-│   │   └── JwtUtil.java
-│   └── exception/
-├── src/main/resources/
-│   ├── application.yml                # 主配置
-│   ├── application-prod.yml           # 生产配置
-│   └── db/migration/                  # SQL脚本
-├── src/test/java/
-├── Dockerfile
-├── docker-compose.yml
-├── .github/workflows/deploy.yml
-└── README.md
-```
-
----
-
-## ⚠️ 四、前端→Java 常见坑（预先排雷）
-
-| 坑 | 前端认知 | Java实际情况 | 解决方案 |
-|----|----------|-------------|----------|
-| **内存消耗** | Node启动50MB | Spring Boot启动300-500MB | 服务器至少2GB内存，用JVM参数调优 |
-| **启动速度** | Vite 毫秒级热更新 | Spring Boot 3-10秒冷启动 | 开发时用DevTools热加载，JDK 21 CRaC |
-| **空指针NPE** | `undefined` `null` 混用，可选链兜底 | `null`调用方法直接抛异常 | 多用`Optional`、`@NotNull`注解、Objects.requireNonNull |
-| **包名/类名** | `user-profile.tsx` kebab-case | `UserProfile.java` PascalCase | 阿里规范的严格命名，类名=大驼峰 |
-| **String比较** | `==`和`===` 都行（某些情况） | `==`比较引用地址！必须用`.equals()` | 非空安全：`Objects.equals(a, b)` 或 `"常量".equals(变量)` |
-| **集合遍历修改** | `array.filter().map()` 返回新数组 | forEach中remove会抛ConcurrentModificationException | 用Iterator.remove() 或 Stream.filter().collect() |
-| **日期处理** | `dayjs` / `Date` | 旧Date难用，新`LocalDateTime` | 统一用`java.time.*`包，Jackson配置序列化 |
-| **依赖注入失效** | — | `new`出来的对象不会注入Bean | 所有Bean都交给Spring管理，不要手动new Service |
-| **事务失效** | — | 同类方法调用 `@Transactional` 不生效 | 原因是AOP代理机制，解决方法：注入自己或拆分Service |
-
----
-
-## 📚 五、推荐学习资源
-
-### 书籍（按优先级）
-1. **《Java核心技术 卷I》（Cay Horstmann）** → 字典书，不需要通读，查漏补缺
-2. **《Spring实战 第6版》（Craig Walls）** → Spring Boot 3，2025新版
-3. **《MyBatis 从入门到精通》（刘增辉）** → MyBatis最佳中文书
-
-### 视频
-1. **B站 - 尚硅谷 SpringBoot3 全套教程** → 国内最系统的免费教程
-2. **B站 - 程序员鱼皮** → Java学习路线与项目实战
-3. **YouTube - Dan Vega / Amigoscode** → Spring Boot英文优质频道
-
-### 在线实战
-1. **start.spring.io** → 项目初始化
-2. **MyBatis-Plus 官方文档** → 最好的MyBatis-Plus教程
-3. **Spring 官方文档** → 权威但阅读门槛高，有一定基础后再看
-
-### 速查表（建议打印）
-- Lombok 常用注解速查
-- MyBatis-Plus 条件构造器速查
-- Spring Boot 核心注解速查
-- application.yml 常用配置速查
-
----
-
-## ✅ 六、每日学习节奏建议
-
-```
-早晨 1h  → 回顾昨天的概念（费曼学习法，讲给自己听）
-白天 3h  → 实战Coding（跟着教程敲代码，不准复制粘贴）
-晚上 1h  → 整理笔记 + 存入知识库（本大纲即为骨架）
-周末 8h  → 集中攻关重难点（Spring Security、JWT、Docker部署）
-```
-
-> **核心原则**：
-> 1. **不要只看不写**——每个知识点至少敲3遍代码
-> 2. **类比驱动学习**——每个Java概念都找到前端对应物
-> 3. **项目驱动学习**——以Blog API为主线，学什么就往里面集成什么
-> 4. **AI辅助但不依赖**——用AI解释代码、生成样板，但核心逻辑必须自己理解
-> 5. **第4周必须上生产**——公网可访问的项目才是真正的产出
-
----
-
-*本大纲为知识库源数据，可导出为 Markdown → 导入 Notion/语雀/飞书文档，按层级展开为可执行的每日计划。*
-
-
-▶ USER: 
-
-我的ide为vscode  后续记得都是这个,开发环境为wsl jdk已经下载 和配置
+搜索2026年最新的资料看看   最适合资深前端快速转java的项目和路线图是什么,做一个系统的规划出来,争取1个月速通java,做到可独立部署开发大中型应用(包含简单的微服务等),列一下4周的大概安排,这个安排要有大纲属性,后续会作为知识库源数据, 目前是wsl2+vscode+java21  环境已经搭配,你直接给我安排学习的目录大纲
 
 
 ▶ ASSISTANT: 
+# 🚀 资深前端 → Java全栈：4周速通路线图（2026版）
 
-好的，已记录：**IDE = VS Code，环境 = WSL，JDK 已配置**。下面更新整个计划，淘汰 IntelliJ IDEA 相关内容，全部换成 VS Code + WSL 适配方案。
-
----
-
-# 🔷 资深前端 → Java后端 1个月速通计划（VS Code + WSL 版）
-
-> **当前状态**：JDK 已安装配置 | IDE：VS Code | 环境：WSL（Windows Subsystem for Linux）
-> **编写日期**：2026-06-30
+> **适用画像**：8年+前端经验，精通 React/Vue/TS/Node.js，理解工程化、组件化、异步编程
+> **目标**：1个月后可独立开发部署含微服务的大中型应用
+> **环境**：WSL2 + VSCode + Java 21（已就绪）
+> **策略**：每个概念都用前端知识做"同声传译"，不做重复认知建设，直接进行概念映射
 
 ---
 
-## 📋 零、环境确认（已完成项 ✓）
+## 📐 路线设计哲学：不做初学者，做"翻译者"
 
-- [x] **WSL 已就绪**
-- [x] **JDK 21 已安装并配置** — `java -version`、`javac -version` 验证通过
-- [ ] **VS Code Java 插件包**（下一步马上装）
-
----
-
-## 🛠️ VS Code Java 开发环境配置（Week 1 前置，2h）
-
-> VS Code 做 Java 开发需要装对插件，否则体验很差。以下是最小必要插件清单：
-
-### 必装插件（Extension Pack for Java 全家桶）
-
-| 插件 | 作用 | 前端类比 |
-|------|------|----------|
-| **Extension Pack for Java** | Java 全家桶（一键装下面6个） | VS Code 的 Java 开发基础 |
-| └ Language Support for Java™ | 语法高亮、代码补全、跳转 | TypeScript 语言服务 |
-| └ Debugger for Java | 断点调试 | Node.js 调试器 |
-| └ Test Runner for Java | 运行 JUnit 测试 | Vitest / Jest 插件 |
-| └ Maven for Java | Maven 项目支持 | npm 支持 |
-| └ Project Manager for Java | 项目管理视图 | Nx / Turborepo 视图 |
-| └ IntelliCode | AI 补全 | GitHub Copilot |
-| **Spring Boot Extension Pack** | Spring Boot 全家桶 | Next.js 插件 |
-| └ Spring Boot Tools | application.yml 补全/跳转 | — |
-| └ Spring Initializr Java | 在 VS Code 里创建 Spring 项目 | `npx create-next-app` |
-| └ Spring Boot Dashboard | 启动/停止/查看 Bean | `npm run dev` 面板 |
-| **Lombok Annotations Support** | Lombok 注解支持 | — |
-| **MyBatisX** | MyBatis 跳转/代码生成 | — |
-| **SonarLint** | 代码质量检查 | ESLint |
-| **GitHub Copilot**（可选） | AI 辅助编码 | Copilot |
-
-### 一键安装命令（在 VS Code 终端执行）
-
-```bash
-# 1. 安装 Java 全家桶
-code --install-extension vscjava.vscode-java-pack
-
-# 2. 安装 Spring Boot 全家桶
-code --install-extension vmware.vscode-boot-dev-pack
-
-# 3. 必备辅助
-code --install-extension gabrielbb.vscode-lombok
-code --install-extension SonarSource.sonarlint-vscode
-```
-
-### VS Code 专属配置（settings.json）
-
-```json
-{
-  // Java 配置
-  "java.jdt.ls.java.home": "/usr/lib/jvm/java-21-openjdk-amd64",
-  "java.configuration.runtimes": [
-    {
-      "name": "JavaSE-21",
-      "path": "/usr/lib/jvm/java-21-openjdk-amd64",
-      "default": true
-    }
-  ],
-  "java.compile.nullAnalysis.mode": "automatic",
-  "java.configuration.updateBuildConfiguration": "automatic",
-  
-  // Maven 配置
-  "maven.executable.path": "mvn",
-  "maven.terminal.useJavaHome": true,
-  
-  // Spring Boot
-  "spring-boot.ls.java.home": "/usr/lib/jvm/java-21-openjdk-amd64",
-  
-  // 保存时自动组织 imports（类比 ESLint --fix）
-  "java.saveActions.organizeImports": true,
-  
-  // 代码格式化
-  "java.format.settings.url": ".vscode/java-formatter.xml",
-  "[java]": {
-    "editor.tabSize": 4,
-    "editor.insertSpaces": true
-  }
-}
-```
-
-### WSL 额外注意事项
+你不需要从零学编程——你已经会了。你需要的是**把已经掌握的知识，翻译成Java方言**。本路线每步都遵循：
 
 ```
-⚠️ 项目代码必须放在 WSL 内部文件系统（~/projects/），不要放在 /mnt/c/ 下
-   原因：跨文件系统 I/O 极慢，Maven 构建会慢 10 倍以上
-
-⚠️ VS Code 用 Remote - WSL 插件连接，左下角显示 "WSL: Ubuntu-xx" 即为正确
-
-⚠️ 端口转发自动处理，Spring Boot 启动在 localhost:8080 可直接浏览器访问
+前端已会概念 → Java对应概念 → 差异点标注 → 代码双栏对比
 ```
 
 ---
 
-## 🗓️ 四周大纲总览
+# 🗓️ Week 1：Java 语言核心——"把 TypeScript 翻译成 Java 方言"
+
+> **目标**：用7天完成Java语法的"概念映射"，能写出类型安全、结构清晰的Java代码
+> **对标前端心智**：从"JS/TS自由风格"切换到"Java强约束风格"
+
+## Day 1：类型系统 + 基础语法（4h）
+
+| 前端概念 | Java对应 | 关键差异 |
+|----------|----------|----------|
+| `let/const` 动态类型 | `int/String/var` 静态强类型 | 🔴 Java是**刚性**类型，编译时确定 |
+| TS `interface` | Java `interface` | 🟢 同名但Java的interface不含实现（default方法除外） |
+| TS `type` 联合类型 | ❌ Java无直接对应 | 🟡 用sealed class + pattern matching替代 |
+| `console.log()` | `System.out.println()` | — |
+
+**练习**：用Java重写一个你之前写的TS工具函数库（deepClone → 用序列化思想理解、debounce → 无直接对应但理解范式差异）
+
+## Day 2：类与对象——"React Class Component 的究极形态"（4h）
+
+| 前端概念 | Java对应 |
+|----------|----------|
+| JS `class` | Java `class`（但强约束100倍） |
+| `constructor()` | Java 构造函数 + 重载 |
+| `this` 指向 | Java `this`（永远指向实例，无绑定问题） |
+| `#privateField` | `private` 关键字 |
+| `static` 方法 | `static` 方法（语义一致） |
+| TS `readonly` | `final` 关键字 |
+
+**练习**：创建一个完整的实体类体系 → 比如 `User → Order → OrderItem`，体会封装/继承/多态
+
+## Day 3：泛型 + 集合框架（5h）⭐核心日
+
+| 前端概念 | Java对应 |
+|----------|----------|
+| TS `Array<T>` | `List<T>` / `ArrayList<T>` |
+| TS `Record<K,V>` / `Map` | `Map<K,V>` / `HashMap<K,V>` |
+| TS `Set<T>` | `Set<T>` / `HashSet<T>` |
+| TS 泛型 `<T extends ...>` | Java 泛型 `<T extends ...>`（语义几乎一致） |
+| JS `[...arr].map().filter()` | Stream API `.map().filter().collect()` |
+
+**练习**：用Stream API重写你用数组方法链处理数据的一个复杂场景
+
+## Day 4：异常 + Optional + 空安全（3h）
+
+| 前端概念 | Java对应 |
+|----------|----------|
+| `try/catch/finally` | 同名（但Java是**检查型异常**） |
+| `throw new Error()` | `throw new Exception()` |
+| `undefined` / `null` 判断 | `Optional<T>` |
+| TS `?.` 可选链 | `Optional.map()` / `Optional.flatMap()` |
+
+**练习**：体会Java的"强迫你处理异常"哲学 vs JS的"崩了就崩了"哲学
+
+## Day 5：注解 + 反射（4h）
+
+| 前端概念 | Java对应 |
+|----------|----------|
+| TS `@decorator` | Java `@Annotation`（更强大，编译期+运行期） |
+| `Proxy` / `Reflect` | Java Reflection API |
+| `Object.keys()` 遍历属性 | `Class.getDeclaredFields()` |
+
+**练习**：写一个自定义注解，用反射读取——理解Spring Boot的"魔法"是如何实现的
+
+## Day 6：Java 21 现代特性速览（4h）
+
+- **Record** = 不可变DTO，对标TS的 `readonly` interface + 自动生成constructor/getter
+- **Pattern Matching** = 对标TS的 discriminated union + switch
+- **Virtual Threads** = 对标Node.js的异步模型（但更底层透明）
+- **Text Blocks** = Java版的模板字符串 `"""..."""`
+
+**练习**：用Record改写所有DTO，用Pattern Matching处理多态逻辑
+
+## Day 7：综合实战 + 阶段性复盘（6h）
+
+**大作业**：纯Java（不用任何框架）实现一个控制台版"简易REST API路由器"
+- 体会没有Spring Boot时手写反射路由的痛
+- 为Week 2的"Spring Boot真香"做心理铺垫
+
+---
+
+# 🗓️ Week 2：Spring Boot 核心——"Java 界的 Next.js"
+
+> **目标**：掌握Spring Boot分层架构、REST API开发、数据库操作
+> **对标前端心智**：Spring Boot = Next.js/Nuxt（全栈框架），但分层更严格
+
+## Day 8：IOC/DI + Spring Boot启动流程（5h）⭐关键日
+
+| 前端概念 | Java对应 |
+|----------|----------|
+| React `Context.Provider` | Spring IOC容器 |
+| `useContext()` / 依赖注入 | `@Autowired` / 构造器注入 |
+| Next.js 约定式路由 | Spring Boot 自动配置（Auto Configuration） |
+| `npm run dev` 热更新 | Spring DevTools |
+| `package.json` | `pom.xml` / `build.gradle` |
+
+**练习**：手写一个迷你IOC容器（≈200行），彻底理解控制反转
+
+## Day 9：Controller + REST API（4h）
+
+| 前端概念 | Java对应 |
+|----------|----------|
+| Next.js API Route | `@RestController` + `@GetMapping` |
+| API Route 的 `req.body` | `@RequestBody` DTO |
+| API Route 的 `req.query` | `@RequestParam` |
+| 动态路由 `[id]` | `@PathVariable` |
+| Express 中间件 | Spring Interceptor / Filter |
+
+**练习**：用Spring Boot重写你之前Node.js项目的一组CRUD接口
+
+## Day 10：Service层 + 分层架构（4h）
+
+| 前端概念 | Java对应 |
+|----------|----------|
+| `src/services/api.ts` | `@Service` 层 |
+| DTO（前端定义的数据结构） | Java DTO/VO/Entity 三层分离 |
+| `zod` 校验 | `@Valid` + `jakarta.validation` |
+| 全局错误处理中间件 | `@RestControllerAdvice` |
+
+**练习**：完整实现 Controller → Service → Repository 三层调用链
+
+## Day 11：MyBatis-Plus 数据库操作（5h）
+
+| 前端概念 | Java对应 |
+|----------|----------|
+| Prisma / TypeORM | MyBatis-Plus / Spring Data JPA |
+| Prisma Schema | Entity类 + `@Table` 注解 |
+| `prisma.user.findMany()` | `userMapper.selectList()` |
+| Prisma Migration | Flyway / Liquibase |
+| SQL直接写 | MyBatis XML / 注解SQL |
+
+**推荐选型**：MyBatis-Plus（对前端更友好，SQL可控，接近你写Prisma的感觉）
+
+## Day 12：Spring Data JPA 对比 + 选型（3h）
+
+快速对比 JPA 和 MyBatis，理解两者的设计哲学差异（类比 Prisma vs Knex.js），最终选择一个深入。
+
+**练习**：分别用JPA和MyBatis实现同一张表的CRUD
+
+## Day 13：事务管理 + 文件上传 + 参数校验（4h）
+
+| 前端概念 | Java对应 |
+|----------|----------|
+| 数据库事务（Prisma `$transaction`） | `@Transactional` |
+| `multer` 文件上传 | `MultipartFile` |
+| `zod` / `yup` 校验 | `@Valid` + Annotation校验 |
+
+## Day 14：Week 2 综合实战（8h）🔥
+
+**大作业**：实现一个完整的"后台管理系统后端"
+- 用户管理（CRUD + 分页 + 条件查询）
+- 文件上传（头像）
+- 统一返回格式 `Result<T>`
+- 全局异常处理
+- 参数校验
+
+---
+
+# 🗓️ Week 3：企业级能力——"从能写到能上线"
+
+> **目标**：掌握安全、缓存、AOP、测试、Docker，具备独立上线能力
+
+## Day 15：Spring Security + JWT 认证（6h）⭐关键日
+
+| 前端概念 | Java对应 |
+|----------|----------|
+| NextAuth / Auth.js | Spring Security |
+| JWT `jose` 库 | `jjwt` 库 |
+| 中间件鉴权 `middleware.ts` | `SecurityFilterChain` |
+| `getServerSession()` | `SecurityContextHolder` |
+| RBAC 权限中间件 | `@PreAuthorize` + 方法级权限 |
+
+**练习**：实现完整的登录→发JWT→拦截验证→RBAC权限控制链路
+
+## Day 16：AOP 面向切面编程（4h）
+
+| 前端概念 | Java对应 |
+|----------|----------|
+| React HOC（高阶组件） | AOP Around Advice |
+| Express 中间件链 | Filter Chain / Interceptor |
+| `useMemo` / 缓存计算结果 | `@Cacheable` |
+| Sentry 错误上报 | `@AfterThrowing` |
+
+**练习**：用AOP实现操作日志自动记录、接口耗时统计
+
+## Day 17：Redis 缓存集成（4h）
+
+| 前端概念 | Java对应 |
+|----------|----------|
+| `localStorage` / 内存缓存 | Redis |
+| SWR `revalidate` 策略 | `@Cacheable` + `@CacheEvict` |
+| Redis Pub/Sub | 对标 WebSocket / EventEmitter |
+| 分布式Session | Spring Session + Redis |
+
+## Day 18：消息队列 RabbitMQ（4h）
+
+| 前端概念 | Java对应 |
+|----------|----------|
+| `EventEmitter` / `postMessage` | RabbitMQ / Kafka |
+| React `useReducer` dispatch | 消息生产者 → 消费者 |
+| 异步任务队列 | `@RabbitListener` |
+
+## Day 19：测试体系（4h）
+
+| 前端概念 | Java对应 |
+|----------|----------|
+| Jest / Vitest | JUnit 5 |
+| `describe` / `it` / `expect` | `@Test` / `assertEquals` |
+| `jest.mock()` | Mockito `@Mock` |
+| Supertest HTTP测试 | MockMvc |
+| React Testing Library | `@SpringBootTest` 集成测试 |
+
+## Day 20-21：综合实战——电商后端（16h）🔥🔥
+
+**终极大作业**（两天）：
+- 商品管理（CRUD + 分类 + 图片）
+- 用户认证 + RBAC（管理员/普通用户）
+- 订单创建（含事务）
+- Redis缓存热门商品
+- AOP操作日志
+- 单元测试覆盖率 > 60%
+- 集成测试覆盖核心接口
+
+---
+
+# 🗓️ Week 4：微服务 + DevOps——"从单体到分布式"
+
+> **目标**：掌握微服务核心组件 + Docker部署，完成全链路闭环
+
+## Day 22：微服务架构概念 + Spring Cloud 入门（5h）
+
+| 前端概念 | Java对应 |
+|----------|----------|
+| 微前端（Module Federation） | 微服务（Spring Cloud） |
+| Nginx 反向代理 | Spring Cloud Gateway |
+| tRPC 服务间调用 | OpenFeign |
+| 前端配置中心（环境变量） | Nacos / Consul |
+| Zustand/Redux 全局状态 | 分布式配置 + 注册中心 |
+
+**练习**：拆分Week 3的电商项目为2个微服务（用户服务 + 商品订单服务）
+
+## Day 23：Nacos 注册中心 + 配置中心（4h）
+
+- 服务注册与发现
+- 动态配置刷新（对标前端 `.env` 热更新）
+- 命名空间隔离（dev/test/prod）
+
+## Day 24：OpenFeign + Gateway（5h）
+
+| 前端概念 | Java对应 |
+|----------|----------|
+| `fetch('/api/user')` | FeignClient 远程调用 |
+| Next.js Middleware 路由 | Gateway 路由转发 |
+| API聚合层（BFF） | Gateway Filter |
+
+**练习**：Gateway统一鉴权 + 路由转发 + Feign服务间调用
+
+## Day 25：Docker 容器化（5h）
+
+| 前端概念 | Java对应 |
+|----------|----------|
+| `next build` 构建产物 | Docker Image |
+| Vercel/Netlify 部署 | Docker Run / Docker Compose |
+| `docker-compose.yml` | 编排多容器（与前端一致） |
+| `.env.local` | 环境变量注入 |
+
+**练习**：将微服务项目全部Docker化，docker-compose一键启动
+
+## Day 26：CI/CD + Linux部署（5h）
+
+| 前端概念 | Java对应 |
+|----------|----------|
+| GitHub Actions / Vercel | Jenkins / GitHub Actions |
+| `npm run build && npm start` | `mvn package && java -jar` |
+| PM2 进程管理 | systemd / supervisor |
+| Nginx 反向代理 | Nginx（一一对应） |
+
+**练习**：写GitHub Actions workflow，实现push自动构建→测试→部署
+
+## Day 27-28：最终大作业（16h）🔥🔥🔥
+
+**全栈微服务项目**：实现一个完整的"在线教育平台"后端微服务系统
 
 ```
-Week 1 ─────── Week 2 ─────── Week 3 ─────── Week 4
-  │               │               │               │
-  ▼               ▼               ▼               ▼
-Java语言       Spring Boot    安全+中间件    部署+实战
-+ Maven        + 数据库         + 项目实战     + 收尾
+├── gateway-service (Spring Cloud Gateway)
+├── user-service (用户服务 - 注册/登录/权限)
+├── course-service (课程服务 - 课程CRUD/分类)
+├── order-service (订单服务 - 购买/支付模拟)
+├── common-module (公共模块 - DTO/工具/异常)
+├── docker-compose.yml (一键启动全部)
+│   ├── MySQL
+│   ├── Redis
+│   ├── Nacos
+│   ├── RabbitMQ
+│   └── 各微服务
+└── .github/workflows/deploy.yml
 ```
 
 ---
 
-## 📘 WEEK 1：Java 语言 + Maven 工程基础（50h）
+# 📊 四周时间分配总览
 
-> **核心目标**：能用 Java 写出 TypeScript 中熟悉的逻辑，理解两者根本差异
-> **锚点策略**：每个概念都跟 TypeScript/JavaScript 对比，快速建立心智模型
-
-### 1.1 环境收尾（2h）
-- [x] JDK 21 已配置（已完成）
-- [ ] 安装上述 VS Code 插件包
-- [ ] 配置 settings.json 中的 `java.jdt.ls.java.home`
-- [ ] 验证：在 VS Code 中创建 `HelloWorld.java`，按 F5 调试运行成功
-- [ ] WSL 中执行 `mvn --version` 确认 Maven 可用（WSL Ubuntu 默认可能未装，装一下：`sudo apt install maven -y`）
-
-### 1.2 Java 语法速通（18h）
-
-> **原则**：你已经是程序员。重点放在 Java 与 TS **不同的地方**。
-
-#### Day 2-3：基础语法 —— 类比 TypeScript
-
-| 概念 | Java | TypeScript | 注意事项 |
-|------|------|------------|----------|
-| 类型系统 | `int`, `long`, `String`, `boolean` | `number`, `string`, `boolean` | Java 是**强类型+静态**，编译时确定类型 |
-| 变量声明 | `var x = 10;`（局部类型推断） | `let x = 10` | Java的 `var` ≠ JS的 `var`！它是编译时类型推断 |
-| 不可变数据 | `final` + **Record**（JDK 14+） | `const` + `as const` + `readonly` | Record ≈ `readonly` 对象 |
-| 空安全 | `Optional<T>` + `@Nullable` | `?` + `??` + 可选链 `?.` | Java 没有 `?.`！用 Optional 链式替代 |
-| 接口/类型 | `interface` + `class` | `interface` + `type` | Java interface 被 implements，type ≈ sealed class |
-| 泛型 | `<T>` | `<T>` | 语法相似，但 Java 是**编译时擦除**，有通配符 `? extends/super` |
-| 异常处理 | `try-catch-finally` + checked exception | `try-catch-finally` | Java 有**受检异常**（必须声明或捕获）——TS没有 |
-| 集合 | `List<T>`, `Map<K,V>`, `Set<T>` | `Array<T>`, `Map<K,V>`, `Set<T>` | API 不同：`size()` 不是 `.length`，`add()` 不是 `.push()` |
-
-- [ ] **实战练习**（每个 1h，共 6h，全部在 VS Code 中完成）
-  1. 用 Java 重写你熟悉的 TS 工具函数（`debounce`、`groupBy`、`deepClone`）
-  2. 用 Record + Stream API 处理 JSON 数据列表
-  3. 实现一个 Builder 模式（对比 TS 的链式调用）
-
-#### Day 4：面向对象（OOP）—— Java 的灵魂
-- [ ] **类与对象** — `class`、`constructor`、`this`（与 TS 基本一致）
-- [ ] **重载（Overload）** — 同名方法不同参数，TS 没有原生重载
-- [ ] **继承** — `extends`（单继承），`super()`，`@Override`
-- [ ] **接口** — `implements` 可实现多个，`default` 方法（TS 无）
-- [ ] **Lombok 必学**：
-  ```java
-  @Data           // = @Getter + @Setter + @ToString + @EqualsAndHashCode
-  @Builder        // Builder 模式
-  @AllArgsConstructor
-  @NoArgsConstructor
-  public class User {
-      private Long id;
-      private String name;
-  }
-  ```
-  → 类比 TS 的 class-transformer + class-validator
-
-#### Day 5：Java 现代特性（JDK 17-21）
-- [ ] **Record**（JDK 14+）→ 不可变数据载体，类比 `type User = {readonly id: number}`
-- [ ] **Pattern Matching + Switch 表达式**（JDK 17+）→ 类比 TS discriminated union
-- [ ] **Sealed Classes**（JDK 17+）→ 类比 TS union type
-- [ ] **Virtual Threads**（JDK 21）→ 类比异步编程但更轻量
-- [ ] **Text Blocks**（JDK 15+）→ 类比模板字符串
-- [ ] **Stream API**（JDK 8+）→ 类比 JS `Array.map/filter/reduce`
-
-### 1.3 Maven 深度学习（8h）
-- [ ] **pom.xml 核心标签**
-  - `<dependencies>` → 类比 `dependencies` in package.json
-  - `<dependencyManagement>` → 类比 pnpm workspace 版本统一
-  - `<build>` + `<plugins>` → 类比 webpack/vite 配置
-- [ ] **生命周期** — `clean → compile → test → package → install → deploy`
-- [ ] **依赖范围 scope** — `compile`（默认）、`provided`、`test`、`runtime`
-- [ ] **实践**：在 VS Code 中用 Maven 创建多模块项目
-
-### 1.4 Git + Java 项目规范（4h）
-- [ ] **阿里巴巴 Java 开发手册** 速览（前3章）
-- [ ] **.gitignore** 标准配置：`target/`、`*.class`、`.idea/`（VS Code用 `.vscode/` 视情况）
-- [ ] **SonarLint** 在 VS Code 中启用，体验类似 ESLint 的实时提示
-
-### 🧪 Week 1 检验标准
-- [ ] VS Code 中 F5 调试 Java 程序无报错
-- [ ] 能手写 Java 代码实现日常逻辑，不查语法书
-- [ ] 理解 Java 与 TS 在类型系统、OOP 上的核心差异
-- [ ] 能独立创建 Maven 项目、添加依赖、运行测试
-- [ ] 能用 Stream API 完成集合操作
-
----
-
-## 📘 WEEK 2：Spring Boot 核心 + 数据库层（55h）
-
-> **核心目标**：用 Spring Boot 3 搭建完整 REST API，连接 MySQL
-> **锚点策略**：Spring Boot ≈ Next.js，Controller ≈ API Route，Service ≈ Server Action
-
-### 2.1 Spring Boot 快速上手（12h）
-
-#### 创建项目（两种方式，选其一）
-
-**方式 A（推荐）**：VS Code 中 `Ctrl+Shift+P` → `Spring Initializr: Create a Maven Project`
-- 选 Spring Boot 3.x（最新稳定版）
-- 选 Java 21
-- 添加依赖：Spring Web、Lombok、MySQL Driver、MyBatis Framework、Spring Security、Validation
-
-**方式 B**：浏览器打开 [start.spring.io](https://start.spring.io)，下载 zip 解压到 WSL
-
-#### 分层架构 vs 前端分层
 ```
-前端分层（Next.js）              Spring Boot 分层
-─────────────────              ────────────────
-page / component               Controller  （接收请求、返回响应）
-   ↕                              ↕
-hooks / service / store   ≈    Service     （业务逻辑）
-   ↕                              ↕
-API fetch / axios               Mapper      （数据访问，MyBatis-Plus）
-                                    ↕
-                               Entity/DTO   （数据模型）
+Week 1 ████████████████░░░░░░░░  40h  纯Java语言
+Week 2 ████████████████████░░░░  48h  Spring Boot核心
+Week 3 ██████████████████████░░  52h  企业级中间件
+Week 4 ████████████████████████  56h  微服务+DevOps
+                        总计 ≈ 196h (日均7h)
 ```
 
-#### Spring Boot VS Code 专属操作
+---
 
-| 操作 | VS Code 快捷键/方式 |
-|------|-------------------|
-| 创建项目 | `Ctrl+Shift+P` → `Spring Initializr` |
-| 启动项目 | Spring Boot Dashboard → 点 ▶ 按钮 |
-| 停止项目 | Spring Boot Dashboard → 点 ■ 按钮 |
-| 查看所有 Bean | Spring Boot Dashboard → Beans 面板 |
-| 查看所有 API 映射 | Spring Boot Dashboard → Mappings 面板 |
-| 运行单个测试 | 代码中点击 `▶ Run Test` |
-| 代码跳转 | `Ctrl+Click` 或 `F12`（和前端一致） |
+# 🎯 每周验收标准
 
-#### 核心注解速记
-
-| 注解 | 作用 | 前端类比 |
-|------|------|----------|
-| `@SpringBootApplication` | 主入口 | `package.json` main + `next.config.js` |
-| `@RestController` | REST 控制器 | `export async function GET()` |
-| `@RequestMapping("/api")` | 路径映射 | 文件路由 `/app/api/` |
-| `@GetMapping` / `@PostMapping` | HTTP 方法 | `export GET` / `export POST` |
-| `@RequestParam` / `@PathVariable` | 提取参数 | `req.query` / `req.params` |
-| `@RequestBody` | 提取请求体 | `await req.json()` |
-| `@Service` | 标记 Service Bean | 普通 class 导出（无特殊标记） |
-| `@Autowired` / 构造注入 | 依赖注入 | React Context / provide-inject |
-| `@Configuration` | 配置类 | `next.config.js` |
-
-- [ ] **IoC / DI 深度理解（重点！）**
-  - Bean 容器 → 类比 React Context 系统（但更底层）
-  - 构造器注入 > setter 注入 > 字段注入
-  - Bean 生命周期：`@PostConstruct`、`@PreDestroy`
-
-### 2.2 MySQL 速通（10h）
-
-- [ ] **Docker 一键安装 MySQL**（WSL 中执行）
-  ```bash
-  docker run -d --name mysql8 -p 3306:3306 \
-    -e MYSQL_ROOT_PASSWORD=root123 \
-    -e MYSQL_DATABASE=blog \
-    mysql:8.0
-  ```
-- [ ] **VS Code 中操作 MySQL**：安装 **MySQL** 插件（作者：cweijan），在 VS Code 侧边栏直接浏览表、执行 SQL
-- [ ] **SQL 必备（5h）**
-  - CRUD：`SELECT`、`INSERT`、`UPDATE`、`DELETE`
-  - 过滤：`WHERE`、`ORDER BY`、`LIMIT`
-  - 联表：`INNER JOIN`、`LEFT JOIN`
-  - 聚合：`COUNT`、`SUM`、`GROUP BY`
-  - 索引：`CREATE INDEX` → 为什么重要（类比 JS Map 的 O(1)）
-  - 事务：`BEGIN` → `COMMIT` / `ROLLBACK`
-
-### 2.3 MyBatis-Plus 实战（15h）
-
-- [ ] **核心概念**
-  - `BaseMapper<T>` → 自动获得 CRUD（类比 Prisma 的 model.findMany/create/...）
-  - `ServiceImpl<M, T>` → Service 层通用实现
-- [ ] **实体映射**
-  ```java
-  @Data
-  @TableName("user")
-  public class User {
-      @TableId(type = IdType.AUTO)
-      private Long id;
-      private String username;
-      @TableField(fill = FieldFill.INSERT)
-      private LocalDateTime createTime;
-      @TableLogic
-      private Integer deleted;
-  }
-  ```
-- [ ] **Lambda 条件构造器**（核心武器）
-  ```java
-  List<User> list = userMapper.selectList(
-      new LambdaQueryWrapper<User>()
-          .eq(User::getStatus, 1)
-          .like(User::getUsername, "admin")
-          .orderByDesc(User::getCreateTime)
-          .last("LIMIT 10")
-  );
-  ```
-  → 类型安全！类比 Prisma 的类型推断 `prisma.user.findMany({where: {...}})`
-- [ ] 分页插件、自动填充、逻辑删除、乐观锁
-
-### 2.4 实战：Blog API（18h）
-
-| 天数 | 内容 | 关键产物 |
-|------|------|---------|
-| Day 1-2 | 用户模块：Entity → Mapper → Service → Controller → 注册/登录接口 | 跑通第一组 CRUD |
-| Day 3 | 文章模块：CRUD + 分页 + 统一响应 `Result<T>` | 理解分层协作 |
-| Day 4 | 分类/标签：多对多关系 + 手写联表 SQL | MyBatis XML 映射 |
-| Day 5 | 联调：Apifox/Postman 测试 + 前端对接 + Swagger 文档 | 至少15个可用接口 |
-
-> **VS Code 提示**：用 **REST Client** 插件（`.http` 文件）替代 Postman，直接在编辑器里发请求：
-> ```http
-> ### 获取文章列表
-> GET http://localhost:8080/api/articles?page=1&size=10
-> 
-> ### 创建文章
-> POST http://localhost:8080/api/articles
-> Content-Type: application/json
-> Authorization: Bearer {{token}}
-> 
-> {
->   "title": "Hello Java",
->   "content": "## Hello World"
-> }
-> ```
-
-### 🧪 Week 2 检验标准
-- [ ] 能从 VS Code 中创建 Spring Boot 项目并点 ▶ 启动
-- [ ] 理解三层架构（Controller→Service→Mapper）的分工
-- [ ] 能用 MyBatis-Plus 完成单表 CRUD + 分页 + 条件查询
-- [ ] 能写出基本联表 SQL
-- [ ] Blog API 至少 15+ 个可用接口
+| 周次 | 验收标准 | 自检问题 |
+|------|----------|----------|
+| W1 | 纯Java写CRUD控制台程序 | 能用Stream/泛型/异常处理写业务逻辑吗？ |
+| W2 | Spring Boot单体后端 | 能独立完成Controller→Service→DAO全链路吗？ |
+| W3 | 企业级单体应用 | 能加上安全/缓存/事务/AOP/测试吗？ |
+| W4 | 微服务+Docker部署 | 能拆服务+容器化+一键部署吗？ |
 
 ---
 
-## 📘 WEEK 3：安全 + 中间件 + 进阶实战（55h）
+# 📚 核心学习资源（2026最新）
 
-> **核心目标**：Blog 具备生产级特性——认证、缓存、文件上传、定时任务
-
-### 3.1 Spring Security + JWT（15h）
-
-- [ ] **安全架构理解**
-  - Filter Chain → 类比 Next.js Middleware
-  - Authentication vs Authorization → 类比 NextAuth 认证 vs 鉴权
-  - SecurityContext → 类比 React Context 中的用户状态
-- [ ] **JWT 完整流程**
-  ```
-  Client                    Server
-    POST /login  ──────────>  验证密码 → 生成JWT
-    <── {accessToken, refreshToken}
-    GET /api/articles ──────>  解析JWT → SecurityContext
-    <── 200 {data: [...]}
-  ```
-- [ ] **实操**：自定义 SecurityConfig → UserDetailsService → JWT 工具类 → 认证过滤器 → `@PreAuthorize` 权限注解
-
-### 3.2 Redis 缓存实战（8h）
-
-- [ ] **Docker 一键安装**（WSL）
-  ```bash
-  docker run -d --name redis7 -p 6379:6379 redis:7-alpine
-  ```
-- [ ] **Spring Cache + Redis**
-  - `@Cacheable` / `@CacheEvict` → 类比 React Query / SWR 缓存策略
-- [ ] 实践：缓存文章详情、排行榜 Top10
-
-### 3.3 文件上传 + 定时任务 + 异步（10h）
-- [ ] `MultipartFile` 接收文件上传（封面图）
-- [ ] `@Scheduled` 定时任务 → 类比 `cron` / `setInterval`
-- [ ] `@Async` + Virtual Threads（JDK 21）异步处理
-
-### 3.4 综合实战：Blog 升级为生产版（22h）
-
-| 天数 | 内容 |
-|------|------|
-| Day 1-2 | 接入 Spring Security + JWT，所有接口加认证 |
-| Day 3 | 接入 Redis 缓存 + 阅读量统计 + 排行榜 |
-| Day 4 | 文件上传 + 全局日志 AOP + 参数校验 |
-| Day 5 | 定时任务 + 异步邮件 + Swagger 文档完善 |
-
-### 🧪 Week 3 检验标准
-- [ ] 理解 JWT 认证全流程，能独立配置 Spring Security
-- [ ] 能正确使用 `@Cacheable` 等缓存注解
-- [ ] 能实现文件上传
-- [ ] Blog API 具备完整的安全认证 + 缓存 + 文件能力
-
----
-
-## 📘 WEEK 4：部署 + Docker + CI/CD + 收尾（50h）
-
-> **核心目标**：Blog 部署到服务器，公网可访问
-
-### 4.1 Docker 实战（12h）
-- [ ] Dockerfile 编写（Spring Boot 3 最佳实践）
-  ```dockerfile
-  FROM eclipse-temurin:21-jre-alpine
-  WORKDIR /app
-  COPY target/*.jar app.jar
-  EXPOSE 8080
-  ENTRYPOINT ["java", "-jar", "app.jar"]
-  ```
-- [ ] docker-compose.yml 编排 MySQL + Redis + App
-- [ ] 多阶段构建（Maven 打包 → 精简运行镜像）
-- [ ] 实践：WSL 中用 docker-compose 一键启动整个 Blog
-
-### 4.2 服务器部署（10h）
-- [ ] 云服务器：阿里云 ECS / 腾讯云轻量（2核4G，Java 比较吃内存）
-- [ ] 环境：JDK 21 + Docker + Docker Compose + Nginx
-- [ ] Nginx 反向代理 + SSL（Let's Encrypt）
-- [ ] 实践：`yourdomain.com` 公网访问 Blog API
-
-### 4.3 CI/CD + 测试 + 收尾（28h）
-- [ ] GitHub Actions 自动化：push → 测试 → 打包 → 部署（类比 Vercel 自动部署）
-- [ ] 单元测试：JUnit 5 + Mockito（类比 Vitest + vi.mock）
-- [ ] 集成测试：Testcontainers（真实 MySQL/Redis 测试）
-- [ ] 日志：Logback 配置
-- [ ] 监控：Spring Boot Actuator 健康检查
-- [ ] 文档：README.md + Swagger 在线文档
-
-### 🧪 Week 4 最终验收
-- [ ] Blog 系统可通过公网域名访问
-- [ ] 前端（Vue/React）可正常调用所有接口
-- [ ] docker-compose 一键启动所有服务
-- [ ] GitHub Actions 实现了自动化部署
-- [ ] 至少 10+ 个单元测试
-- [ ] 文档完善，别人照着 README 能跑起来
-
----
-
-## ⚡ VS Code 快捷键速查（Java 开发）
-
-| 操作 | 快捷键 | 前端类比 |
-|------|--------|----------|
-| 代码补全 | `Ctrl+Space` | 同 VS Code 前端 |
-| 快速修复 | `Ctrl+.` | 同 |
-| 跳转定义 | `F12` | 同 |
-| 查找引用 | `Shift+F12` | 同 |
-| 重构重命名 | `F2` | 同 |
-| 生成 Getter/Setter | 右键 → Source Action | — |
-| 生成 Constructor | 右键 → Source Action | — |
-| 生成 toString() | 右键 → Source Action | — |
-| 自动导入 | `Ctrl+Shift+O`（组织 imports） | — |
-| 运行项目 | Spring Boot Dashboard → ▶ | `npm run dev` |
-| 调试 | `F5` | 同 |
-| 运行测试 | 代码中点击 `▶ Run Test` | 同 |
-
----
-
-## 📚 学习资源
-
-| 类型 | 资源 | 说明 |
+| 资源 | 用途 | 链接 |
 |------|------|------|
-| 书籍 | 《Spring实战 第6版》 | Spring Boot 3，2025新版 |
-| 书籍 | 《Java核心技术 卷I》 | 字典书，查漏补缺 |
-| 视频 | B站 尚硅谷 SpringBoot3 全套 | 国内最系统免费教程 |
-| 文档 | [MyBatis-Plus 官方文档](https://baomidou.com/) | 最好的 MP 教程 |
-| 文档 | [Spring 官方 Guides](https://spring.io/guides) | 15分钟一个主题 |
-| 项目 | [RuoYi-Vue](https://gitee.com/y_project/RuoYi-Vue) | 若依前后端分离，国内最火后台脚手架 |
-| 环境 | [start.spring.io](https://start.spring.io) | 项目初始化 |
+| **roadmap.sh/spring-boot** | 路线图总览 | https://roadmap.sh/spring-boot |
+| **Sai Upadhyayula 微服务教程** | Week 4 微服务实战 | GitHub: `SaiUpadhyayula/spring-boot-3-microservices-course` |
+| **Baeldung** | 各知识点查阅 | https://baeldung.com |
+| **Java 21 官方文档** | Virtual Threads等新特性 | https://dev.java/learn/ |
+| **MyBatis-Plus 官方** | Week 2 数据库操作 | https://baomidou.com |
+| **Spring Boot 3.x 官方** | 框架文档 | https://docs.spring.io/spring-boot |
 
 ---
 
-## ⚠️ 前端→Java 常见坑（VS Code 特别版）
+# ⚠️ 前端转Java的7个关键心态转换
 
-| 坑 | 前端认知 | Java 实际情况 | 解决 |
-|----|----------|-------------|------|
-| **VS Code 启动慢** | Vite 毫秒级热更新 | Spring Boot 冷启动 3-10s | 用 DevTools（`spring-boot-devtools`）+ 热加载 |
-| **代码提示不生效** | — | Java LS 需要时间索引 | 右下角看语言服务状态，首次打开项目等 1-2 分钟 |
-| **import 报红** | — | Maven 依赖未下载完 | `mvn dependency:resolve` 或 VS Code 中 `Java: Clean Workspace` |
-| **空指针 NPE** | `undefined` 可选链兜底 | `null` 调用方法直接抛异常 | 多用 `Optional`、`@NotNull` |
-| **String 比较** | `==` 和 `===` 基本等价 | `==` 比较引用地址！ | 必须用 `.equals()` 或 `Objects.equals(a, b)` |
-| **事务失效** | — | 同类方法调用不走代理 | 注入自身或拆 Service |
-| **项目放在 /mnt/c/** | — | 跨文件系统 I/O 极慢 | 必须放在 WSL 内部 `~/projects/` |
-| **端口占用** | `npx kill-port 8080` | 同样的问题 | `lsof -i :8080` 然后 `kill` |
-
----
-
-## ✅ 每日学习节奏
-
-```
-早晨 1h  → 回顾昨天概念（费曼学习法，讲给自己听）
-白天 3h  → 实战 Coding（VS Code 里敲，不准复制粘贴）
-晚上 1h  → 整理笔记，存入知识库（本大纲为骨架）
-周末 8h  → 集中攻关重难点（Spring Security、JWT、Docker）
-```
-
-> **五条铁律**：
-> 1. **不看不写** — 每个知识点至少敲 3 遍代码
-> 2. **类比驱动** — 每个 Java 概念都找到前端对应物
-> 3. **项目驱动** — 以 Blog API 为主线，学什么集成什么
-> 4. **AI 辅助但不依赖** — AI 解释代码、生成样板，核心逻辑必须自己理解
-> 5. **第 4 周必须上生产** — 公网可访问的项目才是真正的产出
+| # | 前端习惯 | Java现实 |
+|---|----------|----------|
+| 1 | `npm install` 秒装 | Maven下载可能很慢（提前配国内镜像！） |
+| 2 | 改了代码立刻看到 | 编译+重启有延迟（DevTools缓解但不能消除） |
+| 3 | JSON一把梭 | 必须定义Entity/DTO/VO/BO多层对象 |
+| 4 | 单线程事件循环 | 多线程模型，要关注并发安全 |
+| 5 | `any` 随意逃生 | 没有`any`，泛型必须写清楚 |
+| 6 | 启动快（秒级） | Spring Boot启动可能30s+（习惯就好） |
+| 7 | 函数式灵活 | OOP强约束，但设计模式是双刃剑 |
 
 ---
 
-*本大纲为知识库源数据，环境配置为 VS Code + WSL + JDK 21（已配置），后续所有对话基于此前提。*
+> 🔜 **下一步**：我会根据这份大纲，逐天展开详细教程。你可以先说"从 Day 1 开始"，我就给你发第一天的完整学习内容（含前端类比+Java实践+代码对比+练习）。准备好了吗？

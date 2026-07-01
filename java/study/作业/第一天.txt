@@ -1,0 +1,907 @@
+------------------------------ [1. Day1作业细节] ------------------------------
+▶ USER: 
+
+非常详细地列一下第一天的课后作业的代码，以及会遇到的疑问点和难点，并且给我仔细地解释。
+
+
+▶ ASSISTANT: 
+
+好的，我先查一下知识库里第一天课程的内容，看看课后作业具体是什么！
+
+好的！Day 1 的知识库内容我已经全部提取出来了。下面我给你**逐题拆解**，代码全给你写好，每个练习的**疑问点和难点**都标清楚，并用前端思维帮你打通。
+
+---
+
+# 📅 Day 1 课后作业完整拆解
+
+---
+
+## 🔴 前置提醒：先把环境跑通（不然后面全卡住）
+
+在你做任何作业之前，先确保下面这几步能走通——
+
+### 🧩 前端类比
+```
+npm run dev  →  你敲 java Main 就是这种感觉
+```
+但Java是**两步走**：
+```
+tsc app.ts → app.js       ≈  javac Main.java → Main.class
+node app.js               ≈  java Main
+```
+
+### ⚡ WSL2 终端操作
+```bash
+# 1️⃣ 确认版本
+java --version    # 必须显示 21.x.x（或其他版本号）
+javac --version   # 必须显示版本号，不报"command not found"
+
+# 2️⃣ 创建文件夹
+cd ~ && mkdir -p java-learning/day01 && cd java-learning/day01
+
+# 3️⃣ 用VSCode打开
+code .
+```
+
+---
+
+## 📝 练习1：声明所有8种基本类型变量并打印
+
+### 💻 完整代码
+
+```java
+// 文件名: TypeDemo.java
+public class TypeDemo {
+    public static void main(String[] args) {
+        // 1. byte - 极小整数（像 Int8Array）
+        byte b = 127;               // 范围：-128 ~ 127
+        System.out.println("byte: " + b);
+
+        // 2. short - 短整数（像 Int16Array）
+        short s = 32000;            // 范围：约 ±3.2万
+        System.out.println("short: " + s);
+
+        // 3. int - 最常用的整数（JS普通数字的感觉）
+        int i = 2100000000;         // 范围：约 ±21亿
+        System.out.println("int: " + i);
+
+        // 4. long - 大整数（时间戳/ID专用，末尾必须加 L）
+        long l = 9000000000000L;    // 不加L会编译报错！
+        System.out.println("long: " + l);
+
+        // 5. float - 单精度浮点数（末尾必须加 f）
+        float f = 3.14f;            // 不加f会编译报错！
+        System.out.println("float: " + f);
+
+        // 6. double - 默认小数（不用加后缀，最常用）
+        double d = 3.14159265358979;
+        System.out.println("double: " + d);
+
+        // 7. char - 单个字符（用单引号，不是双引号）
+        char c = 'A';               // 双引号"A"是String，编译报错！
+        System.out.println("char: " + c);
+
+        // 8. boolean - 布尔值
+        boolean bool = true;
+        System.out.println("boolean: " + bool);
+    }
+}
+```
+
+### ❓ 疑问点 & 难点
+
+| 疑问点 | 解释（前端翻译） |
+|--------|----------------|
+| 🤔 **为什么int默认，long要加L？** | 就像JS的 `BigInt` 要加 `n`——`9007199254740991n`。Java里整数字面量默认是 `int`，超过int范围或想显式声明 `long`，必须加 `L` 后缀 |
+| 🤔 **float为什么加f？** | JS只有一种 `number`，Java默认所有小数是 `double`（精度更高）。如果你想用 `float` 省内存，必须加 `f` 告诉编译器"我就是故意的" |
+| 🤔 **char为什么用单引号？** | Java里 **单引号=字符**，**双引号=字符串**。`'A'` 是一个char，`"A"` 是一个String。搞混了直接编译报错——不像JS里 `'A'` 和 `"A"` 没区别 |
+| 🤔 **boolean不能赋值0和1？** | 对！Java的 `boolean` 只能 `true` 或 `false`。**不能**像JS那样 `let x = 1; if(x)`——编译直接报错 |
+| 🟡 **踩坑：`System.out.println` 怎么写这么长？** | 这就是你第一个要习惯的！前端 `console.log()` 短小精悍，Java的 `System.out.println()` 又臭又长。VS Code里直接打 `sout` 然后按 Tab 可以快捷补全 |
+
+### ⚠️ 最容易翻车的点
+
+```java
+// ❌ 编译错误大全
+float f = 3.14;           // 报错！3.14 默认是 double，不能隐式转 float
+long l = 9000000000;      // 报错！9000000000 超过 int 范围，必须加 L
+char c = "A";             // 报错！双引号是 String，char 必须用单引号
+int x = 12.5;             // 报错！double 不能隐式转 int
+boolean b = 1;            // 报错！Java boolean 不是 0/1
+```
+
+---
+
+## 📝 练习2：计算1到100的和（for循环）
+
+### 💻 完整代码
+
+```java
+// 文件名: Sum1to100.java
+public class Sum1to100 {
+    public static void main(String[] args) {
+        int sum = 0;  // 累加器，初始为0
+        
+        // for循环结构：和JS一模一样
+        // for (初始化; 条件; 步进)
+        for (int i = 1; i <= 100; i++) {
+            sum = sum + i;   // 也可以写成 sum += i
+        }
+        
+        System.out.println("1到100的和是: " + sum);
+    }
+}
+```
+
+### ❓ 疑问点 & 难点
+
+| 疑问点 | 解释 |
+|--------|------|
+| 🤔 **`int i = 1` 写在for里，外面能用i吗？** | **不能！** 这就是作用域的区别。`for (int i=1; ...)` 里声明的 `i`，只在 `for` 循环的 `{}` 内部有效。出了大括号就废了。**这和JS一样** |
+| 🤔 **sum = sum + i 能写成 sum += i 吗？** | 可以！`+=`、`-=`、`*=`、`/=` 这些**复合赋值运算符**和JS完全一样 |
+| 🤔 **`++` 运算符存在吗？** | 存在！`i++`、`++i`、`i--`、`--i` 和JS用法完全一致。上面的for循环可以写成 `for(int i=1; i<=100; i++)` |
+| 🟡 **踩坑：`<=100` 还是 `<100`？** | `<=100` 表示包括100，循环100次。`<100` 只循环99次。和JS完全一样，但很多人初期会搞混边界 |
+
+### 🧪 拓展玩法——三种循环对比
+
+```java
+// 1. for循环（你最熟悉的）
+int sum1 = 0;
+for (int i = 1; i <= 100; i++) { sum1 += i; }
+
+// 2. while循环（和JS一样）
+int sum2 = 0, j = 1;
+while (j <= 100) { sum2 += j; j++; }
+
+// 3. do-while（至少执行一次）
+int sum3 = 0, k = 1;
+do { sum3 += k; k++; } while (k <= 100);
+
+System.out.println(sum1 + ", " + sum2 + ", " + sum3);
+```
+
+---
+
+## 📝 练习3：判断闰年（if-else）
+
+### 💻 完整代码
+
+```java
+// 文件名: LeapYear.java
+public class LeapYear {
+    public static void main(String[] args) {
+        // 判断 2024 年是不是闰年
+        int year = 2024;
+
+        // 闰年规则：
+        // 1. 能被4整除，但不能被100整除
+        // 2. 或者能被400整除
+        if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)) {
+            System.out.println(year + "年是闰年！");
+        } else {
+            System.out.println(year + "年不是闰年。");
+        }
+
+        // ---------- 进阶：判断多个年份 ----------
+        int[] years = {1900, 2000, 2024, 2025, 2100};
+
+        for (int y : years) {  // 增强for循环（Day 3会细讲）
+            boolean isLeap = (y % 4 == 0 && y % 100 != 0) || (y % 400 == 0);
+            System.out.println(y + " → " + (isLeap ? "闰年 ✅" : "平年 ❌"));
+        }
+    }
+}
+```
+
+### ❓ 疑问点 & 难点
+
+| 疑问点 | 解释 |
+|--------|------|
+| 🤔 **`%` 是啥？** | **取模运算符**，和JS的 `%` 完全一样。`year % 4 == 0` 表示"能被4整除" |
+| 🤔 **`&&` 和 `||` 是啥？** | `&&` = 逻辑与（and），`||` = 逻辑或（or）。**和JS一模-样** |
+| 🤔 **三元运算符 `? :` 存在吗？** | 存在！`条件 ? 值1 : 值2`，和JS的 `条件 ? 值1 : 值2` **用法完全一致** |
+| 🤔 **`else if` 怎么写？** | 和JS一样：`if (...) { } else if (...) { } else { }` |
+| 🟡 **踩坑：`==` 比较的是值还是引用？** | 对于基本类型（int, double, boolean等），`==` 比较**值**。对于引用类型（String, 数组等），`==` 比较**内存地址**。这和JS的 `===` 概念不同，特别坑！但现在你先记住：**基本类型用 `==` 没问题** |
+| 🟡 **踩坑：条件表达式必须有 `boolean` 结果** | JS可以写 `if (1)` 或 `if ("hello")`，但Java**不行**。条件必须是 `boolean` 类型，否则编译报错 |
+
+### 🎯 特别强调：if 条件必须是 boolean！
+
+```java
+// ❌ 这些在JS里可以，在Java里**全部编译报错**
+if (1) { }               // 报错！int 不能转 boolean
+if ("hello") { }          // 报错！String 不能转 boolean
+if (null) { }             // 报错！
+int x = 5;
+if (x) { }                // 报错！
+
+// ✅ 必须写成
+int x = 5;
+if (x == 5) { }           // 没问题，x == 5 的结果是 boolean
+if (x > 0) { }            // 没问题
+boolean flag = true;
+if (flag) { }             // 没问题
+```
+
+> 🧩 **前端类比**：JS有"truthy/falsy"概念，`0`、`""`、`null`、`undefined` 在条件里都是 false。Java**没有 truthy/falsy**，条件必须是 `true` 或 `false` 本身。这是从JS转Java最大的心智冲击之一！
+
+---
+
+## 📝 练习4：故意制造类型错误
+
+### 💻 操作代码
+
+```java
+// 文件名: TypeError.java
+public class TypeError {
+    public static void main(String[] args) {
+        // 🎯 故意写错：把字符串赋值给 int 变量
+        int x = "hello";   // ← 这会编译报错！
+        
+        System.out.println(x);
+    }
+}
+```
+
+### 🖥️ 你会在终端看到什么
+
+```bash
+$ javac TypeError.java
+TypeError.java:5: 错误: 不兼容的类型: String无法转换为int
+        int x = "hello";
+                ^
+1 个错误
+```
+
+### 🧪 建议你多玩几种错误
+
+把下面的代码换着写进去，看编译器分别报什么错：
+
+```java
+// 错误1：类型不匹配
+double d = "3.14";           // 报错：String → double
+
+// 错误2：精度丢失（double → int 可能有损失）
+int a = 3.14;                // 报错：double → int 精度丢失
+
+// 错误3：long 的超大值没加L
+long big = 9999999999;       // 报错：数字太大（超出int范围）
+
+// 错误4：float 没加f
+float f = 3.14;              // 报错：double → float
+
+// 错误5：boolean 被当数字用
+int flag = true;             // 报错：boolean → int
+```
+
+### ❓ 疑问点 & 难点
+
+| 疑问点 | 解释 |
+|--------|------|
+| 🤔 **为什么编译器报错，而不是运行时报错？** | 这就是**静态强类型**的核心特征！JS是动态类型，`let x = "hello"` 完全没问题。Java在**编译阶段**（类比 `tsc` 的阶段）就检查类型。**编译通不过 = 代码压根不能运行** |
+| 🤔 **"不兼容的类型"这个报错是什么意思？** | 翻译成人话：**"你把一个String类型的数据，塞到了一个只能装int的变量里"**。Java的变量**出厂时就定了能装什么类型**，不能混着装 |
+| 🤔 **为什么 `double d = 3` 可以，`int i = 3.14` 不行？** | 因为 `int → double` 是**安全转换**（整数转小数不会丢精度），Java允许。而 `double → int` 是**不安全转换**（小数转整数会丢失小数部分），Java拒绝。这就是Java的"保姆级保护" |
+| 🟡 **核心启发** | 做完这个练习，你的心态要转变：**编译报错不是针对你，是编译器帮你提前发现了Bug**。在JS里这种Bug要等到运行到那一行才崩（甚至悄无声息 NaN），在Java里它根本不给代码运行的机会 ✅ |
+
+---
+
+## 📝 练习5：把TS工具函数的类型签名翻译成Java方法签名
+
+### 👉 场景
+
+```
+你脑子里有很多TS工具函数，比如：
+function debounce(fn: Function, delay: number): Function
+function deepClone<T>(obj: T): T
+function groupBy<T>(arr: T[], key: string): Record<string, T[]>
+```
+
+现在要**只改类型签名，不改逻辑**，翻译成Java。
+
+### ⚠️ 重要提示
+
+**Day 1 你只需要翻译"方法签名"（输入输出声明），不需要真正实现逻辑。** 因为有些东西（如泛型、回调函数）是Day 3-4的内容，这里先体会**静态类型的表达方式**。
+
+### 💻 示例代码：纯工具方法签名
+
+```java
+// 文件名: MethodSignatureDemo.java
+
+/**
+ * 练习5：把TS函数签名翻译成Java方法签名
+ * 注意：这里只展示"签名"，方法体暂时空着或简单返回默认值
+ */
+public class MethodSignatureDemo {
+
+    // ---------- 最基础的 ----------
+    
+    // TS: function add(a: number, b: number): number
+    public static int add(int a, int b) {
+        return a + b;  // 这里真正实现了
+    }
+
+    // TS: function greet(name: string): string
+    public static String greet(String name) {
+        return "Hello, " + name + "!";
+    }
+
+    // TS: function isEven(n: number): boolean
+    public static boolean isEven(int n) {
+        return n % 2 == 0;
+    }
+
+    // ---------- 带数组的 ----------
+    
+    // TS: function sumArray(arr: number[]): number
+    public static int sumArray(int[] arr) {
+        int sum = 0;
+        for (int num : arr) {  // 增强for循环
+            sum += num;
+        }
+        return sum;
+    }
+
+    // ---------- 多个参数 ----------
+    
+    // TS: function clamp(value: number, min: number, max: number): number
+    public static double clamp(double value, double min, double max) {
+        if (value < min) return min;
+        if (value > max) return max;
+        return value;
+    }
+
+    public static void main(String[] args) {
+        // 测试调用
+        System.out.println(add(3, 5));           // 8
+        System.out.println(greet("小明"));        // Hello, 小明!
+        System.out.println(isEven(10));          // true
+        System.out.println(sumArray(new int[]{1, 2, 3, 4, 5}));  // 15
+        System.out.println(clamp(15.0, 0.0, 10.0));  // 10.0
+    }
+}
+```
+
+### ❓ 疑问点 & 难点（⚠️ 这里你会卡死！）
+
+这是**Day 1最难的一个练习**，因为TS里你习惯的东西在Java里大多数不能直接翻译。
+
+#### 🔴 问题1：Java没有"顶层函数"——所有函数必须活在类里
+
+```typescript
+// TS里你可以这样写（顶层函数，不在class里）
+function add(a: number, b: number): number {
+    return a + b;
+}
+```
+
+```java
+// Java里不行！add() 必须写在某个 class 的 {} 里面
+public class MathUtils {      // ← 需要一个"容器"
+    public static int add(int a, int b) {  // ← 加 static
+        return a + b;
+    }
+}
+```
+
+> 🧩 **前端类比**：在JS里 `function foo() {}` 可以随意写在任何地方。在Java里，**所有代码必须是某个类的成员**——就像React里所有代码都必须在一个Component里。**没有"全局函数"这种东西。**
+
+#### 🔴 问题2：`static` 是什么鬼？
+
+```java
+public class Hello {
+    public static void main(String[] args) {  // ← 这个 static
+        greet("Tom");   // 调用另一个 static 方法
+    }
+    
+    // 这里也必须加 static，否则 main 方法里调不了
+    public static void greet(String name) {
+        System.out.println(name);
+    }
+}
+```
+
+> 🧩 **前端类比**：`static` ≈ 挂在**类本身**上的方法，而不是挂在**实例**上。
+
+```typescript
+// 前端类比
+class MathUtils {
+    // static 方法 ≈ 直接挂在类上，不需要 new
+    static add(a: number, b: number): number {
+        return a + b;
+    }
+}
+
+// 直接调用，不需要 new
+MathUtils.add(1, 2);
+
+// 对比：非 static 方法必须 new 了才能用
+class Calculator {
+    add(a: number, b: number): number {
+        return a + b;
+    }
+}
+const calc = new Calculator();
+calc.add(1, 2);
+```
+
+**Day 1 你只需要知道**：在 `main` 方法里调用的方法，前面都必须加 `static`。为什么？因为 `main` 是 `static` 的，static 方法只能调 static 方法。至于为什么，Day 2 讲 `static` 关键字时你自然就懂了。
+
+#### 🔴 问题3：TS里的一些工具函数无法直接翻译
+
+| TS写法 | 能否直接翻译成Java？ | 原因 |
+|--------|---------------------|------|
+| `function debounce(fn: Function, delay: number)` | ❌ **不能** | Java没有"函数作为一等公民"，需要 `interface` + 匿名类（Day 4） |
+| `function deepClone<T>(obj: T): T` | ❌ **不能直接写** | Java泛型语法不同，且需要反射（Day 5） |
+| `function groupBy<T>(arr: T[], key: string): Record<string, T[]>` | ❌ **需要泛型+集合** | Day 3 学了泛型和集合后才能写 |
+| `function sumArray(arr: number[]): number` | ✅ **可以！** | 基本类型数组可以直接翻译 |
+| `function isEven(n: number): boolean` | ✅ **可以！** | 最基础的翻译 |
+
+> 🟡 **核心结论**：**你能直接翻译的，只有那些不涉及泛型、不涉及回调函数、不涉及对象类型的纯数值/字符串操作。**
+
+---
+
+## 🏆 Day 1 验收标准自查
+
+| 标准 | 自检方法 |
+|------|----------|
+| □ 能说出8种基本类型 | 闭着眼睛数：byte、short、int、long、float、double、char、boolean |
+| □ 独立写出main方法签名 | `public static void main(String[] args)` — **不查资料手写出来** |
+| □ 理解编译运行流程 | 能说出 `javac` → `.class` 文件 → `java` 不带后缀运行 |
+| □ 能手写变量+循环+判断 | 练习2和练习3能做到 |
+| □ 看懂类型不匹配报错 | 练习4做了，知道"不兼容的类型"是啥意思 |
+
+---
+
+## 💡 给前端转Java的你一句定心丸
+
+> **第一天最痛苦的不是"不会写"，而是"不习惯"。**
+
+- 不习惯每次声明变量都要写类型 ← 你的TS其实也会写，只是习惯了 `: number` 变成 `int`
+- 不习惯所有代码都包在 `class` 里 ← 你的React组件不也包在 `export default function` 里吗？
+- 不习惯编译报错卡住不让跑 ← 但想想，TS类型报错时不也红了不让提交吗？
+
+**这些"不舒服"恰恰是Java保护你的方式。** 第一周熬过去，你写Java代码就会像写TS一样自然。
+
+---
+
+需要我帮你逐题把代码跑通吗？或者在某个具体问题上卡住了，随时问我！🚀
+
+
+▶ USER: 
+
+对的 需要需要
+
+
+▶ ASSISTANT: 
+
+太好了！直接上手！我带你**一个练习一个练习地跑通**。打开你的 WSL2 终端，我们开始干 👊
+
+---
+
+# 🚀 Day 1 作业实战：逐题带跑
+
+## Step 0：准备工作区
+
+在你终端里**逐行敲**（不要复制粘贴一大段，一句一句来，感受流程）：
+
+```bash
+cd ~
+mkdir -p java-learning/day01
+cd java-learning/day01
+code .
+```
+
+VSCode 打开了对吧？好，我们开始写第一个文件！
+
+---
+
+## 🔥 练习1：声明所有8种基本类型
+
+### 操作步骤
+
+在 VSCode 里新建文件 → 命名为 `TypeDemo.java`（**大小写必须完全一致！**）→ 粘贴以下代码：
+
+```java
+public class TypeDemo {
+    public static void main(String[] args) {
+        // 1. byte
+        byte b = 127;
+        System.out.println("byte: " + b);
+
+        // 2. short
+        short s = 32000;
+        System.out.println("short: " + s);
+
+        // 3. int - 最常用
+        int i = 2100000000;
+        System.out.println("int: " + i);
+
+        // 4. long - 注意L后缀
+        long l = 9000000000000L;
+        System.out.println("long: " + l);
+
+        // 5. float - 注意f后缀
+        float f = 3.14f;
+        System.out.println("float: " + f);
+
+        // 6. double - 默认小数
+        double d = 3.14159265358979;
+        System.out.println("double: " + d);
+
+        // 7. char - 单引号！
+        char c = 'A';
+        System.out.println("char: " + c);
+
+        // 8. boolean - 只能true/false
+        boolean bool = true;
+        System.out.println("boolean: " + bool);
+    }
+}
+```
+
+### 终端编译运行
+
+```bash
+# 编译（不出错就是成功，没消息就是好消息）
+javac TypeDemo.java
+
+# 查看是否生成了 .class 文件
+ls -la
+
+# 运行（注意！不带 .class 后缀）
+java TypeDemo
+```
+
+### ✅ 预期输出
+```
+byte: 127
+short: 32000
+int: 2100000000
+long: 9000000000000
+float: 3.14
+double: 3.14159265358979
+char: A
+boolean: true
+```
+
+### ⚠️ 如果你遇到报错
+
+```bash
+# 报错1：javac 找不到
+# 输出来看看你的Java装没装好
+java --version
+javac --version
+
+# 报错2：类名不一致
+# 检查文件名是不是 TypeDemo.java（大小写）
+# 检查 class 后面是不是 TypeDemo（完全一致）
+
+# 报错3：编码问题
+javac -encoding UTF-8 TypeDemo.java   # 加这个参数试试
+```
+
+### 🧪 玩点"破坏性测试"——看看编译器怎么保护你的
+
+把 `TypeDemo.java` 里的某一行改掉，然后重新编译，看报错：
+
+```java
+int i = 3.14;            // 改这个 → 编译报错：精度丢失
+float f = 3.14;           // 改这个 → 编译报错：double→float
+char c = "A";             // 改这个 → 编译报错：String→char
+long l = 9999999999;      // 改这个 → 编译报错：超出int范围
+boolean b = 1;            // 改这个 → 编译报错：int→boolean
+```
+
+> **每改一次就 `javac TypeDemo.java` 一次，看编译器怎么骂你。** 这是你建立"Java类型心智模型"最快的方式！
+
+---
+
+## 🔥 练习2：计算1到100的和
+
+### 操作步骤
+
+新建 `Sum1to100.java`：
+
+```java
+public class Sum1to100 {
+    public static void main(String[] args) {
+        int sum = 0;
+
+        // for循环：初值; 条件; 步进
+        for (int i = 1; i <= 100; i++) {
+            sum = sum + i;    // 也可以写 sum += i;
+        }
+
+        System.out.println("1到100的和是: " + sum);
+    }
+}
+```
+
+```bash
+javac Sum1to100.java
+java Sum1to100
+```
+
+### ✅ 预期输出
+```
+1到100的和是: 5050
+```
+
+### 🧪 如果你写对了，立刻做三个变体
+
+| 变体 | 改什么 | 预期结果 |
+|------|--------|----------|
+| **变体A** | `i <= 100` → `i < 100` | 4950（少加了100） |
+| **变体B** | `i++` → `i += 2` | 2500（只加奇数，因为i从1开始） |
+| **变体C** | 改成**1到1000** | 500500 |
+
+```bash
+# 改完一行 → 重新编译 → 重新运行
+javac Sum1to100.java && java Sum1to100
+```
+
+> 🟡 **记住这条命令**：`javac X.java && java X` 用 `&&` 连接，编译成功才自动运行，省事！
+
+---
+
+## 🔥 练习3：判断闰年
+
+### 操作步骤
+
+新建 `LeapYear.java`：
+
+```java
+public class LeapYear {
+    public static void main(String[] args) {
+        // 判断2024年
+        int year = 2024;
+
+        // 闰年规则：能被4整除但不能被100整除，或者能被400整除
+        if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)) {
+            System.out.println(year + "年是闰年！");
+        } else {
+            System.out.println(year + "年不是闰年。");
+        }
+
+        // ----- 扩展：一次判断多个年份 -----
+        System.out.println("=== 批量测试 ===");
+        
+        int year1 = 1900, year2 = 2000, year3 = 2024, year4 = 2025;
+        
+        testYear(year1);
+        testYear(year2);
+        testYear(year3);
+        testYear(year4);
+    }
+
+    // 抽取成一个单独的方法（注意：main里调用必须加static）
+    public static void testYear(int year) {
+        boolean isLeap = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+        System.out.println(year + " → " + (isLeap ? "闰年 ✅" : "平年 ❌"));
+    }
+}
+```
+
+```bash
+javac LeapYear.java && java LeapYear
+```
+
+### ✅ 预期输出
+```
+2024年是闰年！
+=== 批量测试 ===
+1900 → 平年 ❌
+2000 → 闰年 ✅
+2024 → 闰年 ✅
+2025 → 平年 ❌
+```
+
+### ❓ 这里你肯定会问的
+
+🤔 **"为什么非要写 `public static void testYear`？不加 `static` 不行吗？"**
+
+**你现在就试一下！** 把 `static` 去掉：
+
+```java
+public void testYear(int year) {   // 去掉 static
+```
+
+然后编译 → **报错**：
+```
+LeapYear.java:20: 错误: 无法从静态上下文中引用非静态方法 testYear(int)
+```
+
+这个报错你Day 1肯定看不懂——没关系，**先记住这个规律**：
+> **在 `main` 方法里调用的其他方法，前面必须加 `static`**
+
+等到Day 2讲 `static` 时，你会恍然大悟 😄
+
+---
+
+## 🔥 练习4：故意制造类型错误
+
+### 操作步骤
+
+新建 `TypeError.java`：
+
+```java
+public class TypeError {
+    public static void main(String[] args) {
+        // 🎯 故意写错
+        int x = "hello";
+
+        System.out.println(x);
+    }
+}
+```
+
+```bash
+javac TypeError.java
+```
+
+### ✅ 预期报错
+```
+TypeError.java:5: 错误: 不兼容的类型: String无法转换为int
+        int x = "hello";
+                ^
+1 个错误
+```
+
+### 🧪 再多玩几种错误
+
+现在修改 `TypeError.java`，依次试这些：
+
+```java
+// 试1
+double d = "3.14";
+
+// 试2
+int a = 3.14;
+
+// 试3（注意：这个数字超过int范围了）
+long big = 9999999999;
+
+// 试4
+float f = 3.14;
+
+// 试5
+int flag = true;
+```
+
+**每试一个就 `javac TypeError.java` 一次**，看报错信息怎么变。目标是**以后看到类似的报错，立刻知道是类型不匹配**。
+
+---
+
+## 🔥 练习5：翻译TS工具函数的类型签名（🚨 最难）
+
+### 操作步骤
+
+新建 `MethodSignatureDemo.java`：
+
+```java
+public class MethodSignatureDemo {
+
+    // TS: function add(a: number, b: number): number
+    public static int add(int a, int b) {
+        return a + b;
+    }
+
+    // TS: function greet(name: string): string
+    public static String greet(String name) {
+        return "Hello, " + name + "!";
+    }
+
+    // TS: function isEven(n: number): boolean
+    public static boolean isEven(int n) {
+        return n % 2 == 0;
+    }
+
+    // TS: function max(a: number, b: number): number
+    public static int max(int a, int b) {
+        // 三元运算符 ?: 和JS一模一样
+        return a > b ? a : b;
+    }
+
+    // TS: function sumArray(arr: number[]): number
+    public static int sumArray(int[] arr) {
+        int sum = 0;
+        for (int num : arr) {   // 增强for循环，和JS for-of 一样
+            sum += num;
+        }
+        return sum;
+    }
+
+    // TS: function celsiusToFahrenheit(c: number): number
+    public static double celsiusToFahrenheit(double c) {
+        return c * 9.0 / 5.0 + 32.0;
+    }
+
+    // main方法——程序的入口
+    public static void main(String[] args) {
+        // 调用上面定义的方法测试
+        System.out.println("add(3, 5) = " + add(3, 5));
+        System.out.println("greet() = " + greet("小明"));
+        System.out.println("isEven(10) = " + isEven(10));
+        System.out.println("max(7, 12) = " + max(7, 12));
+        System.out.println("sumArray = " + sumArray(new int[]{1, 2, 3, 4, 5}));
+        System.out.println("30°C = " + celsiusToFahrenheit(30) + "°F");
+    }
+}
+```
+
+```bash
+javac MethodSignatureDemo.java && java MethodSignatureDemo
+```
+
+### ✅ 预期输出
+```
+add(3, 5) = 8
+greet() = Hello, 小明!
+isEven(10) = true
+max(7, 12) = 12
+sumArray = 15
+30°C = 86.0°F
+```
+
+### 🎯 最关键的你得看懂这个对应关系
+
+| TS | Java | 说明 |
+|----|------|------|
+| `function add(a: number, b: number): number` | `public static int add(int a, int b)` | `number` → `int`，加 `public static` |
+| `function greet(name: string): string` | `public static String greet(String name)` | `string` → `String`（大写S！） |
+| `function isEven(n: number): boolean` | `public static boolean isEven(int n)` | `boolean` 名称一样 |
+| `function sumArray(arr: number[]): number` | `public static int sumArray(int[] arr)` | 数组类型写在后面 `int[]` |
+| 顶层函数（不在class里） | 必须包在 `class` 里 | Java没有顶层函数 |
+
+---
+
+## 🧠 今晚你搞完这些后，能做的一个自测
+
+关了VSCode，在终端里**空手写**：
+
+```bash
+cat > SelfTest.java << 'EOF'
+public class SelfTest {
+    public static void main(String[] args) {
+        // 你能不查资料写出下面这个吗？
+        // 1. 声明3个变量：int年龄, String名字, boolean是否学会
+        // 2. 打印一句自我介绍
+        // 3. 用for循环打印1到10
+        // 4. 用if判断年龄是否大于18
+    }
+}
+EOF
+```
+
+**如果能不查任何资料写出来** → Day 1过关了！👏
+**如果卡住了** → 看看卡在哪一步，问我就行！
+
+---
+
+## ⚠️ 最最最容易翻车的3个坑（对照检查）
+
+```bash
+# ❌ 坑1：运行带 .class
+java Main.class    # 报错！应该是 java Main
+
+# ❌ 坑2：文件名和类名不一致
+# 文件叫 Main.java，但里面写的是 public class main（小写m）
+# 报错！大小写都要一致
+
+# ❌ 坑3：main方法签名写错
+public static void main(String[] args)   # ✅ 正确
+public static void main(string[] args)   # ❌ String是大写S
+public void main(String[] args)          # ❌ 少了static
+static void main(String[] args)          # ❌ 少了public
+```
+
+---
+
+你现在做到哪个练习了？卡在哪里了？把报错信息或者你写的代码贴出来，我帮你一步到位解决！🚀
+
+
+
+
+
+
+========================================================================
+
+Chatbox AI (https://chatboxai.app)
