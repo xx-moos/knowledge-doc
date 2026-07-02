@@ -1,0 +1,905 @@
+------------------------------ [第五天作业细节] ------------------------------
+
+▶ USER: 
+
+非常详细地列一下第五天的课后作业和代码，以及学习中会遇到的疑问点和难点，并且给我仔细地解释
+
+
+▶ ASSISTANT: 
+---
+
+# 📅 Day 5：注解 + 反射——「解密 Spring 的魔法」完整攻略
+
+---
+
+## 🧩 Day 5 全景总览
+
+| 维度 | 说明 |
+|------|------|
+| ⏱ 预计耗时 | **5小时**（上午2.5h注解 + 下午2.5h反射+迷你框架） |
+| 🎯 核心目标 | 理解 Spring Boot 所有 `@` 魔法背后的底层原理 |
+| 🧠 前端类比 | **注解 ≈ TS装饰器** / **反射 ≈ `Object.keys()` + `Proxy` + `Reflect`** |
+| 🔗 在路线中的位置 | Week 1 进阶日——学完今天，Spring Boot对你来说不再是黑箱 |
+
+---
+
+# 📋 第一模块：课后作业与练习（完整4道题）
+
+> 以下是从知识库中提取的 Day 5 **官方4道练习题**，包含完整代码实现。
+
+---
+
+## 🔧 练习1：自定义 `@Table` 注解（20min）
+
+### 作业要求
+自定义一个注解 `@Table`，带一个 `name` 参数，用于标记实体类对应的数据库表名。
+
+### 完整代码
+
+```java
+// 📁 Table.java
+package com.demo.annotation;
+
+import java.lang.annotation.*;
+
+/**
+ * 自定义注解 @Table
+ * 🧩 前端类比：这就像你在 Prisma Schema 里写 model User { ... }
+ * 但 @Table("user_table") 是在代码里给类贴一个"标签"
+ */
+@Retention(RetentionPolicy.RUNTIME)  // ⭐ 保留到运行时！反射才能读到
+@Target(ElementType.TYPE)            // 这个注解只能用在 类/接口 上
+public @interface Table {
+    String name() default "";        // 注解参数，有默认值
+}
+```
+
+```java
+// 📁 User.java
+package com.demo.entity;
+
+import com.demo.annotation.Table;
+
+@Table(name = "t_user")              // 使用自定义注解 🏷️ 贴标签
+public class User {
+    private Long id;
+    private String username;
+    private String email;
+    
+    // 构造器、getter/setter
+    public User() {}
+    
+    public User(Long id, String username, String email) {
+        this.id = id;
+        this.username = username;
+        this.email = email;
+    }
+    
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+}
+```
+
+### 🧪 测试验证
+
+```java
+// 📁 Main.java
+package com.demo;
+
+import com.demo.annotation.Table;
+import com.demo.entity.User;
+
+public class Main {
+    public static void main(String[] args) {
+        Class<User> clazz = User.class;
+        
+        // 检查 User 类上是否有 @Table 注解
+        if (clazz.isAnnotationPresent(Table.class)) {
+            Table table = clazz.getAnnotation(Table.class);
+            System.out.println("表名: " + table.name());  // 输出: 表名: t_user
+        }
+    }
+}
+```
+
+---
+
+## 🔧 练习2：用反射打印类的所有字段（30min）
+
+### 作业要求
+用反射 API 打印出 `User` 类的 **所有字段名 + 字段类型**，就像前端的 `Object.keys()` 一样。
+
+### 完整代码
+
+```java
+// 📁 ReflectionDemo.java
+package com.demo;
+
+import com.demo.entity.User;
+import java.lang.reflect.Field;
+
+public class ReflectionDemo {
+    public static void main(String[] args) {
+        // 🧩 前端类比：这就像 JavaScript 的
+        // const keys = Object.keys(User.prototype);
+        // const fields = keys.map(k => ({ name: k, type: typeof User.prototype[k] }));
+        
+        Class<User> clazz = User.class;
+        
+        System.out.println("=== 🧬 User 类的字段结构 ===");
+        System.out.println("类名: " + clazz.getName());         // 完整类名
+        System.out.println("简单名: " + clazz.getSimpleName());  // User
+        System.out.println("包名: " + clazz.getPackageName());   // com.demo.entity
+        
+        System.out.println("\n📝 字段列表:");
+        // getDeclaredFields() 获取所有字段（包括 private 的）
+        Field[] fields = clazz.getDeclaredFields();
+        for (Field field : fields) {
+            System.out.println("  " + field.getName() 
+                + " : " + field.getType().getSimpleName());
+        }
+        
+        // 对比：getFields() 只返回 public 字段
+        System.out.println("\n📝 public 字段:");
+        for (Field field : clazz.getFields()) {
+            System.out.println("  " + field.getName());
+        }
+    }
+}
+```
+
+### 预期输出
+
+```
+=== 🧬 User 类的字段结构 ===
+类名: com.demo.entity.User
+简单名: User
+包名: com.demo.entity
+
+📝 字段列表:
+  id : Long
+  username : String
+  email : String
+
+📝 public 字段:
+  （没有，因为所有字段都是 private）
+```
+
+> 🟡 **注意**：`getDeclaredFields()` vs `getFields()` 的区别——
+> - `getDeclaredFields()`：拿到类中**所有**字段（含 private）
+> - `getFields()`：只拿到**public**字段（包括从父类继承的）
+
+---
+
+## 🔧 练习3：「迷你路由映射器」—— 手写框架核心（60min）⭐ **最重要**
+
+### 作业要求
+扫描带 `@Route(path)` 注解的方法，将路径与方法映射关系存到一个 `Map<String, Method>` 中。
+
+### 前置准备：定义 `@Route` 注解
+
+```java
+// 📁 annotation/Route.java
+package com.demo.annotation;
+
+import java.lang.annotation.*;
+
+/**
+ * 🧩 前端类比：这就像 Next.js 的约定式路由
+ * pages/users/[id].tsx → 自动映射到 /users/:id
+ * 
+ * 但是 Java 用注解显式声明：
+ * @Route("/users")  → 映射到 /users
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)    // ⭐ 注意！这里用在方法上
+public @interface Route {
+    String path();              // 必填参数，路由路径
+    String method() default "GET";  // HTTP 方法，默认 GET
+}
+```
+
+### 核心实现：路由扫描器
+
+```java
+// 📁 core/RouterScanner.java
+package com.demo.core;
+
+import java.lang.reflect.Method;
+import java.util.*;
+
+/**
+ * 🧩 前端类比：这就像 Express 的 app.get('/users', handler)
+ * 只是我们用 @Route 注解来声明，然后用反射在启动时"注册"
+ * 
+ * 这就是 Spring Boot 启动时干的事情之一！
+ * Spring 扫描所有 @RestController → 找到 @GetMapping → 注册路由
+ */
+public class RouterScanner {
+    
+    // 路由表：Map<路径, 路由信息>
+    private Map<String, RouteInfo> routeMap = new HashMap<>();
+    
+    /**
+     * 扫描一个类，提取所有带 @Route 注解的方法
+     * @param clazz 要扫描的类
+     */
+    public void scanClass(Class<?> clazz) {
+        // 1. 获取类中所有声明的方法
+        Method[] methods = clazz.getDeclaredMethods();
+        
+        for (Method method : methods) {
+            // 2. 检查方法上是否有 @Route 注解
+            if (method.isAnnotationPresent(Route.class)) {
+                Route route = method.getAnnotation(Route.class);
+                String path = route.path();
+                String httpMethod = route.method();
+                
+                // 3. 注册到路由表
+                RouteInfo info = new RouteInfo(clazz, method, httpMethod);
+                routeMap.put(httpMethod + ":" + path, info);
+                
+                System.out.println("  ✅ 注册路由: " + httpMethod + " " + path 
+                    + " → " + clazz.getSimpleName() + "." + method.getName());
+            }
+        }
+    }
+    
+    /**
+     * 批量扫描多个类
+     */
+    public void scanClasses(Class<?>... classes) {
+        for (Class<?> clazz : classes) {
+            scanClass(clazz);
+        }
+    }
+    
+    /**
+     * 根据路径获取路由信息
+     */
+    public Optional<RouteInfo> getRoute(String httpMethod, String path) {
+        return Optional.ofNullable(routeMap.get(httpMethod + ":" + path));
+    }
+    
+    /**
+     * 打印所有已注册的路由
+     */
+    public void printRoutes() {
+        System.out.println("\n=== 🗺️ 已注册的路由表 ===");
+        routeMap.forEach((key, info) -> {
+            System.out.println("  " + key + " → " + info);
+        });
+        System.out.println("共 " + routeMap.size() + " 条路由\n");
+    }
+    
+    /**
+     * 内部类：保存路由信息
+     */
+    public static class RouteInfo {
+        private Class<?> clazz;     // 控制器类
+        private Method method;      // 处理方法
+        private String httpMethod;  // HTTP 方法
+        
+        public RouteInfo(Class<?> clazz, Method method, String httpMethod) {
+            this.clazz = clazz;
+            this.method = method;
+            this.httpMethod = httpMethod;
+        }
+        
+        public Class<?> getClazz() { return clazz; }
+        public Method getMethod() { return method; }
+        public String getHttpMethod() { return httpMethod; }
+        
+        @Override
+        public String toString() {
+            return clazz.getSimpleName() + "." + method.getName() + "()";
+        }
+    }
+}
+```
+
+### 使用示例：用注解定义控制器
+
+```java
+// 📁 controller/UserController.java
+package com.demo.controller;
+
+import com.demo.annotation.Route;
+import com.demo.entity.User;
+
+/**
+ * 🧩 前端类比：这就是 Spring 的 @RestController
+ * 只不过 Spring 帮你做了更多（自动注入、JSON序列化...）
+ */
+public class UserController {
+    
+    @Route(path = "/users", method = "GET")
+    public void listUsers() {
+        System.out.println("执行: 获取所有用户");
+        // 实际业务逻辑...
+    }
+    
+    @Route(path = "/users", method = "POST")
+    public void createUser() {
+        System.out.println("执行: 创建用户");
+    }
+    
+    @Route(path = "/users/{id}", method = "GET")
+    public void getUserById() {
+        System.out.println("执行: 根据ID获取用户");
+    }
+    
+    @Route(path = "/users/{id}", method = "DELETE")
+    public void deleteUser() {
+        System.out.println("执行: 删除用户");
+    }
+}
+```
+
+### 启动测试
+
+```java
+// 📁 Main.java
+package com.demo;
+
+import com.demo.core.RouterScanner;
+import com.demo.controller.UserController;
+
+public class Main {
+    public static void main(String[] args) {
+        System.out.println("🚀 启动路由扫描器...");
+        System.out.println("📂 扫描控制器: UserController");
+        
+        // 模拟 Spring Boot 启动时做的事情
+        RouterScanner scanner = new RouterScanner();
+        scanner.scanClass(UserController.class);
+        scanner.printRoutes();
+        
+        System.out.println("🎯 根据请求查找路由:");
+        // 模拟一个 GET /users 请求
+        String httpMethod = "GET";
+        String path = "/users";
+        
+        scanner.getRoute(httpMethod, path).ifPresentOrElse(
+            routeInfo -> {
+                System.out.println("   找到路由: " + routeInfo);
+            },
+            () -> {
+                System.out.println("   404 Not Found: " + httpMethod + " " + path);
+            }
+        );
+        
+        // 模拟一个不存在的路由
+        scanner.getRoute("PUT", "/users").ifPresentOrElse(
+            routeInfo -> System.out.println("   找到路由: " + routeInfo),
+            () -> System.out.println("   404 Not Found: PUT /users")
+        );
+    }
+}
+```
+
+### 预期输出
+
+```
+🚀 启动路由扫描器...
+📂 扫描控制器: UserController
+  ✅ 注册路由: GET /users → UserController.listUsers
+  ✅ 注册路由: POST /users → UserController.createUser
+  ✅ 注册路由: GET /users/{id} → UserController.getUserById
+  ✅ 注册路由: DELETE /users/{id} → UserController.deleteUser
+
+=== 🗺️ 已注册的路由表 ===
+  GET:/users → UserController.listUsers()
+  POST:/users → UserController.createUser()
+  GET:/users/{id} → UserController.getUserById()
+  DELETE:/users/{id} → UserController.deleteUser()
+共 4 条路由
+
+🎯 根据请求查找路由:
+   找到路由: UserController.listUsers()
+   404 Not Found: PUT /users
+```
+
+---
+
+## 🔧 练习4：让路由可被调用（反射 invoke）（40min）
+
+### 作业要求
+在练习3的基础上，让路由不光能**找到**，还能**动态调用**对应方法。
+
+### 新增：路由执行器
+
+```java
+// 📁 core/RouterExecutor.java
+package com.demo.core;
+
+import java.lang.reflect.Method;
+
+/**
+ * 🧩 前端类比：这就像 Express 里路由匹配到 handler 之后，
+ * 框架帮你调 handler(req, res) —— 这里是用反射动态调用
+ */
+public class RouterExecutor {
+    
+    /**
+     * 执行路由对应的方法
+     * @param routeInfo 路由信息
+     * @param args 方法参数（模拟请求参数）
+     * @return 执行结果
+     */
+    public Object execute(RouterScanner.RouteInfo routeInfo, Object... args) {
+        try {
+            // 1. 获取控制器类的实例（用无参构造器）
+            Object controllerInstance = routeInfo.getClazz()
+                .getDeclaredConstructor()
+                .newInstance();
+            
+            // 2. 获取方法
+            Method method = routeInfo.getMethod();
+            
+            System.out.println("  ▶ 动态调用: " + routeInfo);
+            System.out.println("  ▶ 在实例: " + controllerInstance);
+            
+            // 3. 反射调用方法！
+            Object result = method.invoke(controllerInstance, args);
+            
+            return result;
+            
+        } catch (Exception e) {
+            System.err.println("  ❌ 路由执行失败: " + e.getMessage());
+            return null;
+        }
+    }
+}
+```
+
+### 完整的主程序
+
+```java
+// 📁 Main.java（集成版）
+package com.demo;
+
+import com.demo.core.RouterScanner;
+import com.demo.core.RouterExecutor;
+import com.demo.controller.UserController;
+
+public class Main {
+    public static void main(String[] args) {
+        System.out.println("🚀 启动迷你Web框架...");
+        
+        // Step 1: 扫描路由（Spring启动时做的事）
+        RouterScanner scanner = new RouterScanner();
+        scanner.scanClass(UserController.class);
+        scanner.printRoutes();
+        
+        // Step 2: 模拟收到请求，执行路由（服务器运行时做的事）
+        RouterExecutor executor = new RouterExecutor();
+        
+        System.out.println("=== 🌐 模拟请求处理 ===");
+        
+        // 请求1: GET /users
+        System.out.println("\n📨 请求: GET /users");
+        scanner.getRoute("GET", "/users").ifPresent(
+            info -> executor.execute(info)
+        );
+        
+        // 请求2: POST /users
+        System.out.println("\n📨 请求: POST /users");
+        scanner.getRoute("POST", "/users").ifPresent(
+            info -> executor.execute(info)
+        );
+        
+        // 请求3: GET /users/123
+        System.out.println("\n📨 请求: GET /users/123");
+        scanner.getRoute("GET", "/users/{id}").ifPresent(
+            info -> executor.execute(info)
+        );
+    }
+}
+```
+
+### 预期输出
+
+```
+🚀 启动迷你Web框架...
+  ✅ 注册路由: GET /users → UserController.listUsers
+  ✅ 注册路由: POST /users → UserController.createUser
+  ✅ 注册路由: GET /users/{id} → UserController.getUserById
+  ✅ 注册路由: DELETE /users/{id} → UserController.deleteUser
+
+=== 🗺️ 已注册的路由表 ===
+  ...
+
+=== 🌐 模拟请求处理 ===
+
+📨 请求: GET /users
+  ▶ 动态调用: UserController.listUsers()
+  ▶ 在实例: com.demo.controller.UserController@4eec7777
+  执行: 获取所有用户
+
+📨 请求: POST /users
+  ▶ 动态调用: UserController.createUser()
+  ▶ 在实例: com.demo.controller.UserController@3b07d329
+  执行: 创建用户
+
+📨 请求: GET /users/123
+  ▶ 动态调用: UserController.getUserById()
+  ▶ 在实例: com.demo.controller.UserController@41629346
+  执行: 根据ID获取用户
+```
+
+---
+
+# ❓ 第二模块：学习中会遇到的疑问点与难点
+
+## 🚩 难点1：注解的「元注解」—— 第一道门槛
+
+### 前端脑袋里的困惑
+> "为什么定义注解还要写 `@Retention` 和 `@Target`？TS装饰器直接写 `function log(target) { }` 不就好了？"
+
+### 深度解释
+
+**一句话总结**：`@Retention` 和 `@Target` 就是注解的**配置规则**，告诉 Java 编译器/虚拟机**这个标签该贴在哪、该保留多久**。
+
+| 元注解 | 作用 | 前端类比 |
+|--------|------|----------|
+| `@Retention` | 注解保留到什么时候 | 就像你写 `console.log()` —— 开发时有用，生产环境要不要保留？ |
+| `@Target` | 注解能贴在哪 | 就像 TS 的 `type` 能否用在 `class` 上——有的语法位置不允许 |
+
+### `@Retention` 三种策略——**这是最容易被坑的地方！**
+
+```java
+@Retention(RetentionPolicy.SOURCE)    // 只在源码中保留，编译后消失
+// 例子：@Override —— 编译器检查用，运行时不需要
+
+@Retention(RetentionPolicy.CLASS)     // 保留在 .class 文件中，但运行时不可见
+// 例子：Lombok 的 @Getter —— 编译时生成代码，运行时不需要反射
+
+@Retention(RetentionPolicy.RUNTIME)   // ⭐保留到运行时，反射能读到！
+// 例子：Spring 的 @Service —— 运行时靠反射扫描
+```
+
+> 🔴 **最常见的坑**：自定义注解忘记写 `@Retention(RUNTIME)`，反射死活读不到！**留作业检查用**。
+
+```java
+// ❌ 错误示例
+public @interface MyAnnotation {}  // 默认 RetentionPolicy.CLASS！
+                                   // 运行时反射读不到！！！
+
+// ✅ 正确做法
+@Retention(RetentionPolicy.RUNTIME)  // 必须显式指定！
+public @interface MyAnnotation {}
+```
+
+### `@Target` 的常见取值
+
+```java
+@Target(ElementType.TYPE)      // 类、接口、枚举
+@Target(ElementType.METHOD)    // 方法
+@Target(ElementType.FIELD)     // 字段
+@Target(ElementType.PARAMETER) // 方法参数
+@Target(ElementType.CONSTRUCTOR) // 构造器
+
+// 可以同时多个：
+@Target({ElementType.TYPE, ElementType.METHOD})  // 既能用在类上也能用在方法上
+```
+
+---
+
+## 🚩 难点2：反射的「侵入感」—— 为什么有 `setAccessible(true)`？
+
+### 前端脑袋里的困惑
+> "我用 `Object.keys(obj)` 直接拿属性，为什么 Java 反射要写 `field.setAccessible(true)` 才能访问 private 字段？"
+
+### 深度解释
+
+**一句话总结**：Java 的 `private` 是**编译期和运行期双重保护**。反射想打破这个保护，必须显式"授权"。
+
+```java
+// 假设 User 类有一个 private 字段
+public class User {
+    private String secret = "这是秘密";
+}
+
+// 反射要访问它：
+Field field = User.class.getDeclaredField("secret");
+// field.get(user);  // ❌ IllegalAccessException！
+
+field.setAccessible(true);  // ✅ 显式授权：我就是要打破封装！
+String val = (String) field.get(user);  // ✅ 现在能访问了
+System.out.println(val);  // 输出: 这是秘密
+```
+
+| 前端 | Java |
+|------|------|
+| `Object.keys(obj)` | `Class.getDeclaredFields()` |
+| `obj.secret`（直接访问） | ❌ `private` 保护 |
+| 没有类似机制 | ✅ 调用 `setAccessible(true)` 授权 |
+
+> 🟡 **避坑提醒**：`setAccessible(true)` 是 Java 反射的"逃生舱"。Spring 在启动时大量用它来注入 private 字段。但**业务代码中不要乱用**，它破坏了封装性，而且有性能损耗。
+
+---
+
+## 🚩 难点3：注解「不干活」的哲学——最重要的心智模型
+
+### 前端脑袋里的困惑
+> "TS 的装饰器 `@log` 里直接写 `console.log('called')` 就能生效。为什么 Java 注解 `@Log` 定义的时候啥代码都不写，还要另外写代码去读它？"
+
+### 深度解释
+
+**一句话总结**：**注解只是"贴纸"，反射才是"读贴纸的人"**。
+
+```mermaid
+graph LR
+    A[定义注解 @interface Log] --> B[在方法上贴 @Log]
+    B --> C[反射扫描: 检查是否有 @Log]
+    C --> D[根据 @Log 执行行为]
+    
+    style A fill:#FFE0E0
+    style B fill:#E0FFE0
+    style C fill:#E0E0FF
+    style D fill:#FFFFE0
+```
+
+```java
+// ════════════════════════════════════════
+// 🏷️ 第1部分：定义"贴纸"（注解）
+// ════════════════════════════════════════
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface Log {
+    String value() default "";
+}
+
+// ════════════════════════════════════════
+// 🏷️ 第2部分：贴"贴纸"（使用者）
+// ════════════════════════════════════════
+public class UserService {
+    @Log("获取用户")     // 贴纸本身不干活
+    public User getUser(Long id) {
+        return new User(id, "张三", "z@e.com", 25);
+    }
+    
+    @Log("删除用户")     // 又一张贴纸
+    public void deleteUser(Long id) {
+        System.out.println("删除了用户" + id);
+    }
+}
+
+// ════════════════════════════════════════
+// 🔍 第3部分：读"贴纸"并执行行为（框架）
+// ════════════════════════════════════════
+public class LogProcessor {
+    
+    public static void processAnnotations(Object instance) {
+        Class<?> clazz = instance.getClass();
+        Method[] methods = clazz.getDeclaredMethods();
+        
+        for (Method method : methods) {
+            // 读取注解
+            if (method.isAnnotationPresent(Log.class)) {
+                Log log = method.getAnnotation(Log.class);
+                System.out.println("📋 发现 @Log(\"" + log.value() + "\") 在方法 " 
+                    + method.getName() + " 上");
+            }
+        }
+    }
+    
+    public static void main(String[] args) {
+        UserService service = new UserService();
+        processAnnotations(service);
+    }
+}
+```
+
+### 这个设计哲学对转行者意味着什么？
+
+| 对比项 | TS 装饰器 | Java 注解 |
+|--------|-----------|-----------|
+| 定义时 | 直接写执行逻辑 | 只定义数据（参数） |
+| 运行时 | 装饰器函数自动执行 | **不会自动执行**，需要别人来读 |
+| 谁触发 | JS 引擎自动调用 | 框架/工具手动扫描 |
+| 类比 | 智能标签（自带CPU） | RFID 标签（只有数据，需要读卡器） |
+
+> 🟢 **这样设计的好处**：**关注点分离**。
+> - 注解只做**声明**（"这个方法需要记录日志"）
+> - 反射代码做**执行**（"扫描所有方法，有 @Log 的就记录日志"）
+> - 你可以换不同的"执行器"来处理同样的"声明"
+
+---
+
+## 🚩 难点4：反射的「性能代价」—— 为什么 Spring 只在启动时用反射？
+
+### 前端脑袋里的困惑
+> "既然反射这么强大，为什么不能用它来替代所有常规方法调用？"
+
+### 深度解释
+
+| 调用方式 | 速度 | 安全性 | 代码可读性 |
+|----------|------|--------|-----------|
+| 常规调用 `service.getUser(id)` | ⚡ 最快 | ✅ 编译期检查 | ✅ 清晰 |
+| 反射调用 `method.invoke(service, id)` | 🐢 慢 10~100倍 | ❌ 运行时才检查 | ❌ 难懂 |
+
+```java
+// 性能对比示例
+public class PerformanceTest {
+    public static void main(String[] args) throws Exception {
+        UserService service = new UserService();
+        Method method = UserService.class.getMethod("getUser", Long.class);
+        
+        // ⚡ 常规调用：JVM 可以直接编译执行
+        long start = System.nanoTime();
+        for (int i = 0; i < 1_000_000; i++) {
+            service.getUser(1L);
+        }
+        long normalTime = System.nanoTime() - start;
+        
+        // 🐢 反射调用：JVM 需要解析方法、检查参数、处理异常
+        start = System.nanoTime();
+        for (int i = 0; i < 1_000_000; i++) {
+            method.invoke(service, 1L);
+        }
+        long reflectTime = System.nanoTime() - start;
+        
+        System.out.println("常规调用: " + normalTime / 1_000_000 + "ms");
+        System.out.println("反射调用: " + reflectTime / 1_000_000 + "ms");
+        System.out.println("反射是常规的 " + (reflectTime / normalTime) + " 倍");
+    }
+}
+```
+
+> 🟢 **Spring 的策略**：**启动时用反射做绑定，运行时走常规调用**。这就是为什么 Spring Boot 启动慢（30s+），但运行时不慢。
+
+---
+
+## 🚩 难点5：`Class.forName()` vs `类名.class` vs `对象.getClass()`—— 三种获取 Class 对象的方式
+
+### 前端脑袋里的困惑
+> "为什么获取一个类的 Class 对象有三种方法？哪种该用哪种？"
+
+### 深度解释
+
+```java
+// 方式1：编译期确定 —— 最常用，性能最好 ⭐
+Class<User> clazz1 = User.class;
+
+// 方式2：运行时通过实例获取 —— 当你有实例时
+User user = new User();
+Class<?> clazz2 = user.getClass();  // <?> 因为编译期不知道具体类型
+
+// 方式3：通过全限定类名字符串 —— 最灵活，但会抛异常!
+Class<?> clazz3 = Class.forName("com.demo.entity.User");
+```
+
+| 方式 | 何时用 | 前端类比 |
+|------|--------|----------|
+| `User.class` | 编译期已知类型 | `User.prototype.constructor` |
+| `obj.getClass()` | 只有实例，不知类型 | `typeof obj` |
+| `Class.forName()` | 类名在配置文件/变量中 | `const Clazz = require(classPath)` |
+
+> 🟡 **避坑**：`Class.forName("com.demo.entity.User")` 写错字符串不会编译报错，**运行时才抛 `ClassNotFoundException`**！
+
+---
+
+## 🚩 难点6：注解的参数类型限制
+
+### 前端脑袋里的困惑
+> "为什么注解的参数类型这么受限？不能传对象，不能传 null？"
+
+### 深度解释
+
+**注解参数只支持以下类型**：
+
+```java
+public @interface MyAnnotation {
+    // ✅ 基本类型
+    int intValue();
+    boolean boolValue();
+    
+    // ✅ String
+    String name();
+    
+    // ✅ 枚举
+    Color color();  // enum Color { RED, GREEN, BLUE }
+    
+    // ✅ 其他注解
+    Deprecated dep();  // 可以用元注解作为参数
+    
+    // ✅ 以上类型的数组
+    String[] tags();
+    
+    // ❌ 不能是对象！
+    // User user();  // ❌ 编译错误！
+    
+    // ❌ 不能是 null 作为默认值
+    // String value() default null;  // ❌ 编译错误！
+    
+    // ✅ 解决方法：用空字符串或特殊常量
+    String value() default "";  // ✅ 可以
+}
+```
+
+### 为什么这样设计？
+
+> **因为注解是编译期就确定的数据结构**，注解参数的值必须在编译期就已知。`new User()` 这样的运行时对象不能被嵌入注解。
+
+---
+
+# 💡 第三模块：核心知识点速查表
+
+## 注解定义速查
+
+```java
+// 一个完整的注解定义模板
+@Retention(RetentionPolicy.RUNTIME)   // 运行时保留
+@Target(ElementType.METHOD)          // 用在方法上
+@Documented                          // 生成 JavaDoc 时包含
+@Inherited                           // 子类继承父类的注解
+public @interface MyAnnotation {
+    String value() default "";       // 常用默认参数名
+    int count() default 1;           // 有默认值就变成可选参数
+}
+```
+
+## 反射核心 API 速查
+
+| API | 作用 | 前端类比 |
+|-----|------|----------|
+| `Class.forName("全限定类名")` | 加载类 | `require('module')` |
+| `clazz.getDeclaredFields()` | 获取所有字段 | `Object.keys(obj)` |
+| `clazz.getDeclaredMethods()` | 获取所有方法 | `Object.getOwnPropertyNames(proto)` |
+| `clazz.getDeclaredConstructors()` | 获取所有构造器 | `new.target` |
+| `clazz.isAnnotationPresent(Anno.class)` | 检查是否有注解 | `Reflect.hasMetadata` |
+| `field.setAccessible(true)` | 打破封装 | 无直接类比 |
+| `method.invoke(obj, args)` | 动态调用方法 | `obj[methodName].apply(obj, args)` |
+| `constructor.newInstance(args)` | 动态创建实例 | `new obj.constructor(args)` |
+
+## Spring 注解映射到自定义注解
+
+| Spring 注解 | 它本质上就是 | 等效于我们手写的 |
+|-------------|-------------|------------------|
+| `@RestController` | 类上的注解 | `@Route`（但 Spring 做了更多） |
+| `@GetMapping("/users")` | 方法上的注解 | `@Route(path="/users", method="GET")` |
+| `@Service` | 标记为业务逻辑组件 | 我们的 `@Component` |
+| `@Autowired` | 标记需要自动注入 | 手动从 Map 里取 bean |
+
+---
+
+# 📊 Day 5 验收自测清单
+
+```
+✅ □ 能自定义一个注解（正确设置 @Retention 和 @Target）
+✅ □ 能解释 RetentionPolicy.RUNTIME 与 CLASS 的区别
+✅ □ 能用反射读取类的字段名和类型
+✅ □ 能用 isAnnotationPresent 检查注解是否存在
+✅ □ 理解"注解是标签，反射是读卡器"的设计哲学
+✅ □ 能写出迷你路由扫描器（练习3）
+✅ □ 能用 method.invoke() 动态调用方法（练习4）
+✅ □ 理解 Spring Boot 的 @魔法底层就是 注解+反射
+✅ □ 能说出反射的3个缺点（慢/破坏封装/不安全）
+```
+
+---
+
+# 🔗 延伸：这个知识点在你未来项目中的位置
+
+```
+Day 5 学完 → Week 2 Day 8（IOC容器）→ Day 9（@RestController）→ Day 10（@Service + DI）
+               ↓
+          Spring Boot 启动流程：
+          1. 扫描包下所有类          ← 你用 Class.forName + 包扫描
+          2. 找 @Component/@Service   ← 你用 isAnnotationPresent
+          3. 创建实例放入容器          ← 你用 constructor.newInstance
+          4. 找 @Autowired 字段注入    ← 你用 field.set(instance, bean)
+          5. 找 @GetMapping 注册路由   ← 你用 routeMap.put(path, method)
+          
+          🌟 你现在已经知道 Spring Boot 启动时在干什么了！
+```
+
+---
+
+> 💬 **学习建议**：练习3（迷你路由映射器）是今天最重要的练习，**一定要手敲至少2遍**。第一次照着敲，第二次默写。当你看到自己手写的路由扫描器能通过反射自动找到 `@Route` 注解时，你会对 Spring 的神秘感彻底消失。如果你在敲的时候卡住了，随时来问我！👊
