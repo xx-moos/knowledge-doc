@@ -1,0 +1,712 @@
+wsl 中用 window ncat 转发提交代码 
+
+▶ USER: 
+
+Git: ssh: connect to host coding.jd.com port 22: Connection timed out   git 提交提示这个找不到  宿主机开了vpn  wsl 也开了代理export  你看怎么弄
+
+▶ ASSISTANT: 
+
+这个不是“git 提交”本身的问题，而是 **Git 通过 SSH 连接 `coding.jd.com:22` 超时**。
+
+```bash
+ssh: connect to host coding.jd.com port 22: Connection timed out
+```
+
+说明 WSL 里访问不到 `coding.jd.com` 的 22 端口。常见原因：
+
+1. WSL 没走宿主机 VPN 路由；
+2. WSL 配了 `http_proxy/https_proxy`，但 **SSH 不会自动使用这些代理**；
+3. 公司网络/VPN 禁了 22 端口；
+4. DNS 解析到了内网地址，但 WSL 没有到内网的路由。
+
+可以按下面顺序排查和解决。
+
+---
+
+## 1. 先确认是 SSH 连接问题
+
+在 WSL 里执行：
+
+```bash
+ssh -Tvvv git@coding.jd.com
+```
+
+或者：
+
+```bash
+nc -vz coding.jd.com 22
+```
+
+如果看到：
+
+```bash
+Connection timed out
+```
+
+就是 22 端口连不上。
+
+再看 DNS：
+
+```bash
+nslookup coding.jd.com
+```
+
+如果解析失败，说明是 DNS 问题；如果能解析但连不上，多半是 VPN/路由/端口问题。
+
+---
+
+## 2. 先在 Windows 宿主机上测试
+
+在 Windows PowerShell 里执行：
+
+```powershell
+ssh -T git@coding.jd.com
+```
+
+或者：
+
+```powershell
+Test-NetConnection coding.jd.com -Port 22
+```
+
+### 情况 A：Windows 也连不上
+
+那说明不是 WSL 的问题，而是：
+
+- VPN 没连对；
+- 公司网络不允许 22；
+- `coding.jd.com` 需要内网环境；
+- 需要用 HTTPS 或 SSH 443 端口。
+
+可以跳到下面第 5/6 步。
+
+### 情况 B：Windows 能连上，WSL 连不上
+
+那就是典型的 **WSL 没有正确走宿主机 VPN 网络**。
+
+---
+
+## 3. WSL2 + VPN 常见解决：开启 mirrored 网络
+
+如果你用的是 WSL2，建议在 Windows 用户目录创建或编辑：
+
+```powershell
+notepad $env:USERPROFILE\.wslconfig
+```
+
+加入：
+
+```ini
+[wsl2]
+networkingMode=mirrored
+dnsTunneling=true
+autoProxy=true
+```
+
+然后重启 WSL：
+
+```powershell
+wsl --shutdown
+```
+
+重新打开 WSL，再试：
+
+```bash
+ssh -T git@coding.jd.com
+```
+
+这个对很多 VPN + WSL2 的问题很有效。
+
+---
+
+## 4. 仅 export 代理对 SSH 没用
+
+你说 WSL 也开了代理 `export`，比如：
+
+```bash
+export http_proxy=http://127.0.0.1:7890
+export https_proxy=http://127.0.0.1:7890
+```
+
+这个对 `curl`、`wget`、部分 Git HTTPS 有用，但对：
+
+```bash
+git@coding.jd.com:xxx/xxx.git
+```
+
+这种 SSH 地址 **基本没用**。
+
+SSH 要单独配置代理。
+
+---
+
+## 5. 给 SSH 配置代理
+
+如果你宿主机代理端口是 `7890`，例如 Clash、v2rayN、Nekoray 等，需要先确认 WSL 里能访问到这个代理。
+
+### 5.1 找到 Windows 宿主机 IP
+
+在 WSL 里：
+
+```bash
+cat /etc/resolv.conf | grep nameserver
+```
+
+可能输出：
+
+```bash
+nameserver 172.25.64.1
+```
+
+这个 `172.25.64.1` 通常就是 WSL 访问 Windows 宿主机的地址。
+
+测试代理：
+
+```bash
+curl -x http://172.25.64.1:7890 https://www.baidu.com -I
+```
+
+如果你的代理是 SOCKS5：
+
+```bash
+curl --socks5 172.25.64.1:7890 https://www.baidu.com -I
+```
+
+注意：代理软件需要开启类似：
+
+- Allow LAN
+- 允许局域网连接
+- 监听地址 `0.0.0.0`
+
+否则 WSL 访问不到。
+
+---
+
+### 5.2 配置 SSH 走 HTTP 代理
+
+编辑：
+
+```bash
+vim ~/.ssh/config
+```
+
+加入：
+
+```sshconfig
+Host coding.jd.com
+    HostName coding.jd.com
+    User git
+    Port 22
+    ProxyCommand nc -X connect -x 172.25.64.1:7890 %h %p
+```
+
+如果你的代理是 HTTP 代理，用这个。
+
+然后测试：
+
+```bash
+ssh -T git@coding.jd.com
+```
+
+---
+
+### 5.3 配置 SSH 走 SOCKS5 代理
+
+如果你用的是 SOCKS5，例如 Clash 的 SOCKS 端口：
+
+```sshconfig
+Host coding.jd.com
+    HostName coding.jd.com
+    User git
+    Port 22
+    ProxyCommand nc -X 5 -x 172.25.64.1:7890 %h %p
+```
+
+如果 `nc` 不支持 `-X`，安装 OpenBSD 版 netcat：
+
+```bash
+sudo apt update
+sudo apt install netcat-openbsd
+```
+
+再试：
+
+```bash
+ssh -T git@coding.jd.com
+```
+
+---
+
+## 6. 如果 22 端口被封，改用 HTTPS 地址
+
+看一下当前仓库 remote：
+
+```bash
+git remote -v
+```
+
+可能是：
+
+```bash
+origin  git@coding.jd.com:xxx/yyy.git
+```
+
+可以改成 HTTPS：
+
+```bash
+git remote set-url origin https://coding.jd.com/xxx/yyy.git
+```
+
+然后：
+
+```bash
+git pull
+git push
+```
+
+如果 HTTPS 需要代理，Git 可以这样配：
+
+```bash
+git config --global http.proxy http://172.25.64.1:7890
+git config --global https.proxy http://172.25.64.1:7890
+```
+
+取消代理：
+
+```bash
+git config --global --unset http.proxy
+git config --global --unset https.proxy
+```
+
+---
+
+## 7. 如果平台支持 SSH 443 端口
+
+有些 Git 平台支持 SSH over 443，比如：
+
+```sshconfig
+Host coding.jd.com
+    HostName coding.jd.com
+    User git
+    Port 443
+```
+
+但这个要看 `coding.jd.com` 是否支持。你可以测试：
+
+```bash
+nc -vz coding.jd.com 443
+ssh -T -p 443 git@coding.jd.com
+```
+
+如果支持，再写进：
+
+```bash
+vim ~/.ssh/config
+```
+
+```sshconfig
+Host coding.jd.com
+    HostName coding.jd.com
+    User git
+    Port 443
+```
+
+---
+
+## 8. 推荐你先这么试
+
+按优先级：
+
+### 第一步：确认 WSL 能不能连 22
+
+```bash
+nc -vz coding.jd.com 22
+```
+
+### 第二步：Windows PowerShell 测试
+
+```powershell
+Test-NetConnection coding.jd.com -Port 22
+```
+
+### 第三步：如果 Windows 能、WSL 不能，开 WSL mirrored
+
+编辑：
+
+```powershell
+notepad $env:USERPROFILE\.wslconfig
+```
+
+写入：
+
+```ini
+[wsl2]
+networkingMode=mirrored
+dnsTunneling=true
+autoProxy=true
+```
+
+然后：
+
+```powershell
+wsl --shutdown
+```
+
+### 第四步：如果还是不行，SSH 配代理
+
+```bash
+cat /etc/resolv.conf | grep nameserver
+```
+
+假设结果是 `172.25.64.1`，编辑：
+
+```bash
+vim ~/.ssh/config
+```
+
+HTTP 代理写：
+
+```sshconfig
+Host coding.jd.com
+    HostName coding.jd.com
+    User git
+    Port 22
+    ProxyCommand nc -X connect -x 172.25.64.1:7890 %h %p
+```
+
+SOCKS5 代理写：
+
+```sshconfig
+Host coding.jd.com
+    HostName coding.jd.com
+    User git
+    Port 22
+    ProxyCommand nc -X 5 -x 172.25.64.1:7890 %h %p
+```
+
+然后：
+
+```bash
+ssh -T git@coding.jd.com
+```
+
+---
+
+## 结论
+
+你现在的问题大概率是：
+
+> WSL 里的 Git SSH 没走宿主机 VPN/代理，导致访问 `coding.jd.com:22` 超时。
+
+优先解决方案：
+
+1. WSL2 开 `networkingMode=mirrored`；
+2. 或者给 `~/.ssh/config` 单独配置 `ProxyCommand`；
+3. 如果公司禁 22，改 HTTPS 或 SSH 443。
+
+
+▶ USER: 
+
+我在描述下  我的window宿主机已经通过vpn链接公司内网可以访问  coding.jd.com 22   但是wsl 开启 networkingMode 无法想宿主机那样直连 coding.jd.com 22   会被拦截  这个是vpn的问题吗
+
+
+▶ ASSISTANT: 
+
+是的，**大概率是 VPN 客户端/公司安全策略和 WSL2 网络栈兼容的问题**，不是 Git 的问题。
+
+你现在的现象是：
+
+- Windows 宿主机：能访问 `coding.jd.com:22`
+- WSL：即使开启了 `networkingMode=mirrored`，还是不能直连 `coding.jd.com:22`
+- 报错：`ssh: connect to host coding.jd.com port 22: Connection timed out`
+
+这说明 **VPN 只接管了 Windows 宿主机自己的流量，但没有正确接管 WSL/Hyper-V 虚拟网卡里的流量**，或者公司 VPN 安全策略主动拦截了来自 WSL/虚拟网卡的流量。
+
+很多公司 VPN 都会这样，比如 AnyConnect、GlobalProtect、深信服、天融信、零信任客户端等。它们可能只允许 Windows 本机进程访问内网，不允许 WSL、Docker、Hyper-V、虚拟机流量进入 VPN 隧道。
+
+---
+
+# 结论
+
+你这个不是简单的 `export http_proxy` 能解决的。
+
+因为你用的是 SSH：
+
+```bash
+git@coding.jd.com:xxx/xxx.git
+```
+
+SSH 不会自动使用：
+
+```bash
+export http_proxy=...
+export https_proxy=...
+```
+
+而且 `networkingMode=mirrored` 也不一定能绕过公司 VPN 的安全策略。
+
+---
+
+# 推荐方案：让 WSL 的 SSH 连接借用 Windows 进程发起
+
+因为 Windows 宿主机能连 `coding.jd.com:22`，所以可以让 WSL 里的 SSH 不直接连，而是调用 Windows 上的 `ncat.exe` 去连。
+
+这样连接路径变成：
+
+```text
+WSL ssh  ->  Windows ncat.exe  ->  公司 VPN  ->  coding.jd.com:22
+```
+
+重点是：**真正发起 TCP 连接的是 Windows 进程 ncat.exe**，所以一般能走 VPN。
+
+---
+
+## 方案一：用 Windows 版 ncat 作为 SSH ProxyCommand
+
+### 1. Windows 安装 Nmap
+
+下载地址：
+
+```text
+https://nmap.org/download.html
+```
+
+安装时勾选 Ncat。
+
+安装后一般路径是：
+
+```text
+C:\Program Files\Nmap\ncat.exe
+```
+
+---
+
+### 2. 在 WSL 里测试 Windows ncat 能不能连
+
+在 WSL 里执行：
+
+```bash
+"/mnt/c/Program Files/Nmap/ncat.exe" -vz coding.jd.com 22
+```
+
+如果成功，类似：
+
+```text
+Ncat: Connected to xxx.xxx.xxx.xxx:22.
+```
+
+说明这个方案可行。
+
+---
+
+### 3. 配置 WSL 的 SSH
+
+编辑：
+
+```bash
+vim ~/.ssh/config
+```
+
+加入：
+
+```sshconfig
+Host coding.jd.com
+    HostName coding.jd.com
+    User git
+    Port 22
+    ProxyCommand "/mnt/c/Program Files/Nmap/ncat.exe" %h %p
+```
+
+然后测试：
+
+```bash
+ssh -T git@coding.jd.com
+```
+
+如果能看到类似认证提示或者欢迎信息，就好了。
+
+之后 Git 不用改：
+
+```bash
+git pull
+git push
+```
+
+都会自动走这个配置。
+
+---
+
+## 如果路径带空格有问题，用软链接处理
+
+有些情况下 OpenSSH 对带空格路径兼容不好，可以在 WSL 里做个软链接：
+
+```bash
+sudo ln -s "/mnt/c/Program Files/Nmap/ncat.exe" /usr/local/bin/ncat-win
+```
+
+然后改成：
+
+```sshconfig
+Host coding.jd.com
+    HostName coding.jd.com
+    User git
+    Port 22
+    ProxyCommand /usr/local/bin/ncat-win %h %p
+```
+
+再试：
+
+```bash
+ssh -T git@coding.jd.com
+```
+
+---
+
+# 方案二：如果你有宿主机代理，也可以让 SSH 走代理
+
+如果 Windows 上的 VPN 客户端同时提供了 HTTP/SOCKS 代理，比如 Clash、v2rayN、公司代理客户端等，可以在 WSL 里配置 SSH 代理。
+
+但注意，普通的：
+
+```bash
+export http_proxy=http://xxx:7890
+```
+
+对 SSH 不生效。
+
+需要配置：
+
+```bash
+vim ~/.ssh/config
+```
+
+HTTP 代理：
+
+```sshconfig
+Host coding.jd.com
+    HostName coding.jd.com
+    User git
+    Port 22
+    ProxyCommand nc -X connect -x 172.xx.xx.1:7890 %h %p
+```
+
+SOCKS5 代理：
+
+```sshconfig
+Host coding.jd.com
+    HostName coding.jd.com
+    User git
+    Port 22
+    ProxyCommand nc -X 5 -x 172.xx.xx.1:7890 %h %p
+```
+
+其中 `172.xx.xx.1` 是 WSL 访问 Windows 宿主机的 IP，可以用这个看：
+
+```bash
+cat /etc/resolv.conf | grep nameserver
+```
+
+不过你这个场景更推荐 **方案一 ncat.exe**，因为你已经确认 Windows 自己能直连公司内网。
+
+---
+
+# 方案三：继续尝试修 WSL mirrored 网络
+
+如果你想让 WSL 像 Windows 一样直接访问公司内网，可以继续尝试这个配置。
+
+在 Windows 用户目录编辑：
+
+```powershell
+notepad $env:USERPROFILE\.wslconfig
+```
+
+写入：
+
+```ini
+[wsl2]
+networkingMode=mirrored
+dnsTunneling=true
+autoProxy=true
+firewall=false
+```
+
+然后重启 WSL：
+
+```powershell
+wsl --shutdown
+```
+
+再打开 WSL 测试：
+
+```bash
+nc -vz coding.jd.com 22
+```
+
+但是这个不一定成功，因为如果 VPN 客户端策略上不允许 WSL/Hyper-V 流量，改 WSL 配置也没用。
+
+---
+
+# 你可以这样判断是不是 VPN 策略问题
+
+Windows PowerShell：
+
+```powershell
+Test-NetConnection coding.jd.com -Port 22
+```
+
+如果成功：
+
+```text
+TcpTestSucceeded : True
+```
+
+WSL：
+
+```bash
+nc -vz coding.jd.com 22
+```
+
+如果失败：
+
+```text
+timed out
+```
+
+同时在 WSL 里执行 Windows ncat：
+
+```bash
+"/mnt/c/Program Files/Nmap/ncat.exe" -vz coding.jd.com 22
+```
+
+如果这个成功，就基本可以确认：
+
+> WSL 自己的 Linux 网络流量被 VPN/安全策略拦了，但 Windows 进程发出的流量可以走 VPN。
+
+---
+
+# 最推荐你现在用这个配置
+
+```sshconfig
+Host coding.jd.com
+    HostName coding.jd.com
+    User git
+    Port 22
+    ProxyCommand "/mnt/c/Program Files/Nmap/ncat.exe" %h %p
+```
+
+这一般是处理公司 VPN + WSL Git SSH 最稳的方式。
+
+然后测试：
+
+```bash
+ssh -T git@coding.jd.com
+```
+
+成功后直接：
+
+```bash
+git pull
+git push
+```
+
+就行。

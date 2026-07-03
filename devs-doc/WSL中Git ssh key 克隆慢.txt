@@ -1,0 +1,370 @@
+WSL中Git ssh key 克隆慢
+
+▶ USER: 
+我的wsl的github  clone 的很慢  而我已经设置了代理   [user]
+	name = xx-moos
+	email = 1017182993@qq.com
+	useConfigOnly = true
+[http "github.com"]
+	proxy = socks5://127.0.0.1:10808
+[https "github.com"]
+	proxy = socks5://127.0.0.1:10808
+在wsl中
+
+▶ ASSISTANT: 
+
+你这个配置里，**最可能的问题是 Git 没有真正命中代理配置**。
+
+你现在写的是：
+
+```ini
+[http "github.com"]
+    proxy = socks5://127.0.0.1:10808
+[https "github.com"]
+    proxy = socks5://127.0.0.1:10808
+```
+
+这通常**不会正确匹配** GitHub 的地址。  
+Git 的 URL 匹配一般要写成带协议的形式，比如 `https://github.com`。
+
+---
+
+## 建议直接这样改
+
+### 方案 1：全局代理
+在 WSL 里执行：
+
+```bash
+git config --global http.proxy socks5h://127.0.0.1:10808
+```
+
+如果你想同时让命令行工具也走代理，可以再加：
+
+```bash
+export all_proxy=socks5h://127.0.0.1:10808
+export http_proxy=socks5h://127.0.0.1:10808
+export https_proxy=socks5h://127.0.0.1:10808
+```
+
+> 注意我这里用的是 `socks5h://`，不是 `socks5://`。  
+> `socks5h` 会让 **DNS 也走代理**，通常更适合 GitHub。
+
+---
+
+### 方案 2：只给 GitHub 单独设置
+配置文件写成：
+
+```ini
+[http "https://github.com"]
+    proxy = socks5h://127.0.0.1:10808
+```
+
+如果你要改命令行：
+
+```bash
+git config --global http.https://github.com.proxy socks5h://127.0.0.1:10808
+```
+
+---
+
+## 你的原配置为什么可能慢
+
+### 1. 匹配不到
+`[http "github.com"]` 很可能没生效。
+
+### 2. `socks5://` DNS 可能不走代理
+这会导致解析 GitHub 域名时慢或者不稳定。  
+建议改成 `socks5h://`。
+
+### 3. WSL 和 Windows 代理地址问题
+如果你的代理软件跑在 Windows 上，WSL2 有时虽然 `127.0.0.1` 可用，但不一定最稳。  
+如果还是慢，可以试试 Windows 主机 IP。
+
+先看 WSL 的默认网关：
+
+```bash
+ip route | grep default
+```
+
+或者：
+
+```bash
+cat /etc/resolv.conf | grep nameserver
+```
+
+拿到那个 IP 后，把代理地址换成：
+
+```bash
+socks5h://那个IP:10808
+```
+
+---
+
+## 你可以这样检查是否生效
+
+```bash
+git config --global --get-regexp proxy
+```
+
+或者：
+
+```bash
+git config --list --show-origin | grep proxy
+```
+
+如果没看到你设置的代理，说明没写对位置或没生效。
+
+---
+
+## 推荐你直接用这一套
+
+```bash
+git config --global http.proxy socks5h://127.0.0.1:10808
+git config --global http.https://github.com.proxy socks5h://127.0.0.1:10808
+```
+
+然后再试：
+
+```bash
+git clone https://github.com/xxx/xxx.git
+```
+
+---
+
+如果你愿意，我可以直接帮你写一份 **WSL 下最稳的 Git / curl / apt 代理配置**。
+
+
+▶ USER: 
+
+我用的是 git clone git@github.com:xx-moos/py-learn.git  这个克隆命令  仓库是存在的  ssh  key 都有
+
+
+▶ ASSISTANT: 
+
+你这个重点变了：你用的是
+
+```bash
+git clone git@github.com:xx-moos/py-learn.git
+```
+
+这是 **SSH 协议**，不是 HTTPS。
+
+所以你在 Git 里配的：
+
+```ini
+[http "github.com"]
+    proxy = ...
+[https "github.com"]
+    proxy = ...
+```
+
+对这个命令 **完全不生效**。
+
+---
+
+## 解决思路
+
+SSH 走代理要配置 `~/.ssh/config`，不是 `.gitconfig`。
+
+---
+
+# 方案一：让 GitHub SSH 走 SOCKS5 代理
+
+编辑 WSL 里的 SSH 配置：
+
+```bash
+nano ~/.ssh/config
+```
+
+加入：
+
+```sshconfig
+Host github.com
+    HostName github.com
+    User git
+    Port 22
+    ProxyCommand nc -X 5 -x 127.0.0.1:10808 %h %p
+```
+
+保存后测试：
+
+```bash
+ssh -T git@github.com
+```
+
+正常的话会看到类似：
+
+```text
+Hi xx-moos! You've successfully authenticated, but GitHub does not provide shell access.
+```
+
+然后再 clone：
+
+```bash
+git clone git@github.com:xx-moos/py-learn.git
+```
+
+---
+
+## 如果提示 nc 不支持 `-X`
+
+WSL 里可能装的是 GNU netcat，不支持 SOCKS 参数。推荐安装 OpenBSD 版本：
+
+### Ubuntu / Debian WSL：
+
+```bash
+sudo apt update
+sudo apt install netcat-openbsd
+```
+
+确认：
+
+```bash
+nc -h 2>&1 | grep proxy
+```
+
+或者直接测试 SSH。
+
+---
+
+# 方案二：用 connect-proxy
+
+安装：
+
+```bash
+sudo apt update
+sudo apt install connect-proxy
+```
+
+然后 `~/.ssh/config` 写：
+
+```sshconfig
+Host github.com
+    HostName github.com
+    User git
+    Port 22
+    ProxyCommand connect -S 127.0.0.1:10808 %h %p
+```
+
+测试：
+
+```bash
+ssh -T git@github.com
+```
+
+---
+
+# 方案三：走 GitHub 的 443 SSH 端口，通常更稳
+
+有些网络环境下 22 端口很慢或被干扰，可以改用 GitHub 的 SSH over HTTPS 端口：
+
+```sshconfig
+Host github.com
+    HostName ssh.github.com
+    User git
+    Port 443
+```
+
+如果你还想让它走代理，可以这样：
+
+```sshconfig
+Host github.com
+    HostName ssh.github.com
+    User git
+    Port 443
+    ProxyCommand nc -X 5 -x 127.0.0.1:10808 %h %p
+```
+
+然后测试：
+
+```bash
+ssh -T git@github.com
+```
+
+---
+
+## 推荐配置
+
+如果你的代理软件在 Windows 上，端口是 `10808`，先试这个：
+
+```sshconfig
+Host github.com
+    HostName ssh.github.com
+    User git
+    Port 443
+    ProxyCommand nc -X 5 -x 127.0.0.1:10808 %h %p
+```
+
+然后：
+
+```bash
+chmod 600 ~/.ssh/config
+ssh -T git@github.com
+git clone git@github.com:xx-moos/py-learn.git
+```
+
+---
+
+## 如果 `127.0.0.1:10808` 不通
+
+WSL2 访问 Windows 代理有时候 `127.0.0.1` 不稳定。可以换成 Windows 主机 IP。
+
+获取 IP：
+
+```bash
+cat /etc/resolv.conf | grep nameserver
+```
+
+例如输出：
+
+```text
+nameserver 172.23.144.1
+```
+
+那么配置改成：
+
+```sshconfig
+Host github.com
+    HostName ssh.github.com
+    User git
+    Port 443
+    ProxyCommand nc -X 5 -x 172.23.144.1:10808 %h %p
+```
+
+---
+
+## 总结
+
+你的 Git HTTPS 代理配置只对这种命令有效：
+
+```bash
+git clone https://github.com/xx-moos/py-learn.git
+```
+
+但你现在用的是：
+
+```bash
+git clone git@github.com:xx-moos/py-learn.git
+```
+
+所以要配：
+
+```bash
+~/.ssh/config
+```
+
+推荐最终配置：
+
+```sshconfig
+Host github.com
+    HostName ssh.github.com
+    User git
+    Port 443
+    ProxyCommand nc -X 5 -x 127.0.0.1:10808 %h %p
+```
+
+再执行：
+
+```bash
+ssh -T git@github.com
+```

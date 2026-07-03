@@ -1,0 +1,386 @@
+WSL nodejs 80 被拒,需要提权
+
+▶ USER: 
+error   Failed to start dev server.
+error   listen EACCES: permission denied 0.0.0.0:80    在wsl中出现了这个错误  我该怎么做 
+▶ ASSISTANT: 
+
+这个错误的意思是：你的 dev server 想监听 `0.0.0.0:80`，但在 WSL/Linux 中，`80` 是特权端口，普通用户没有权限绑定，所以报：
+
+```bash
+listen EACCES: permission denied 0.0.0.0:80
+```
+
+## 推荐解决方案：换一个非 80 端口
+
+把端口改成 `3000`、`5173`、`8080` 等大于 `1024` 的端口。
+
+例如：
+
+```bash
+npm run dev -- --port 3000
+```
+
+或者：
+
+```bash
+npm run dev -- --host 0.0.0.0 --port 3000
+```
+
+然后访问：
+
+```text
+http://localhost:3000
+```
+
+---
+
+## 如果你用的是 Vite
+
+可以这样启动：
+
+```bash
+npm run dev -- --host 0.0.0.0 --port 5173
+```
+
+或者修改 `vite.config.js`：
+
+```js
+export default {
+  server: {
+    host: '0.0.0.0',
+    port: 5173
+  }
+}
+```
+
+---
+
+## 如果你用的是 Next.js
+
+```bash
+npm run dev -- -p 3000
+```
+
+或者：
+
+```bash
+next dev -p 3000
+```
+
+---
+
+## 如果你必须使用 80 端口
+
+### 方案一：用 sudo 启动，不太推荐
+
+```bash
+sudo npm run dev
+```
+
+不推荐长期这样做，因为会带来权限和文件归属问题。
+
+---
+
+### 方案二：给 Node 授权绑定低端口
+
+先找到 node 路径：
+
+```bash
+which node
+```
+
+假设输出是：
+
+```bash
+/usr/bin/node
+```
+
+执行：
+
+```bash
+sudo setcap 'cap_net_bind_service=+ep' /usr/bin/node
+```
+
+然后再启动 dev server：
+
+```bash
+npm run dev -- --host 0.0.0.0 --port 80
+```
+
+注意：如果你用的是 `nvm`，Node 路径可能类似：
+
+```bash
+/home/你的用户名/.nvm/versions/node/vxx/bin/node
+```
+
+需要对实际路径执行 `setcap`。
+
+---
+
+## 也可能是 80 端口已经被占用
+
+可以在 WSL 里检查：
+
+```bash
+sudo ss -ltnp | grep ':80'
+```
+
+如果有进程占用了 80，可以停止它，或者换端口。
+
+例如如果是 nginx：
+
+```bash
+sudo service nginx stop
+```
+
+---
+
+## 最建议你这样做
+
+开发环境不要用 `80`，直接改成：
+
+```bash
+npm run dev -- --host 0.0.0.0 --port 3000
+```
+
+然后访问：
+
+```text
+http://localhost:3000
+```
+
+如果只是本机开发，甚至可以不加 `--host 0.0.0.0`：
+
+```bash
+npm run dev -- --port 3000
+```
+
+
+▶ USER: 
+
+我必须要使用80
+
+
+▶ ASSISTANT: 
+
+如果你**必须在 WSL 里使用 80 端口**，推荐按下面顺序处理。
+
+---
+
+## 1. 先确认 80 端口有没有被占用
+
+在 WSL 中执行：
+
+```bash
+sudo ss -ltnp | grep ':80'
+```
+
+如果有输出，说明 80 端口已经被某个进程占用了。
+
+例如看到 nginx/apache：
+
+```bash
+sudo service nginx stop
+```
+
+或：
+
+```bash
+sudo service apache2 stop
+```
+
+如果是其他进程，可以根据 PID 停掉：
+
+```bash
+sudo kill <PID>
+```
+
+---
+
+## 2. 最简单方案：用 sudo 启动
+
+例如：
+
+```bash
+sudo npm run dev
+```
+
+如果你的命令是 Vite：
+
+```bash
+sudo npm run dev -- --host 0.0.0.0 --port 80
+```
+
+Next.js：
+
+```bash
+sudo npm run dev -- -p 80
+```
+
+不过这个方案有缺点：可能导致 `node_modules`、缓存文件、构建文件变成 root 权限，之后普通用户操作会出权限问题。
+
+如果之后遇到权限问题，可以修复：
+
+```bash
+sudo chown -R $USER:$USER .
+```
+
+---
+
+## 3. 更推荐方案：给 Node 绑定 80 端口的权限
+
+Linux 默认不允许普通用户监听 1024 以下端口，80 就属于这种端口。
+
+你可以给 `node` 添加权限：
+
+```bash
+sudo setcap 'cap_net_bind_service=+ep' $(which node)
+```
+
+然后正常启动：
+
+```bash
+npm run dev -- --host 0.0.0.0 --port 80
+```
+
+如果是 Next.js：
+
+```bash
+npm run dev -- -p 80
+```
+
+---
+
+## 4. 如果你使用 nvm，注意 node 路径
+
+先看你的 node 路径：
+
+```bash
+which node
+```
+
+可能输出类似：
+
+```bash
+/home/你的用户名/.nvm/versions/node/v20.11.1/bin/node
+```
+
+对这个路径授权：
+
+```bash
+sudo setcap 'cap_net_bind_service=+ep' /home/你的用户名/.nvm/versions/node/v20.11.1/bin/node
+```
+
+也可以直接：
+
+```bash
+sudo setcap 'cap_net_bind_service=+ep' $(which node)
+```
+
+验证是否生效：
+
+```bash
+getcap $(which node)
+```
+
+正常应该看到类似：
+
+```bash
+/home/xxx/.nvm/versions/node/v20.11.1/bin/node cap_net_bind_service=ep
+```
+
+---
+
+## 5. 如果 setcap 后 node 命令失效
+
+有些 nvm 场景下，给 node 加 capability 后可能出现库路径问题，比如：
+
+```bash
+node: error while loading shared libraries
+```
+
+这时可以撤销：
+
+```bash
+sudo setcap -r $(which node)
+```
+
+然后改用 `authbind` 或反向代理。
+
+---
+
+## 6. 另一个稳定方案：用 nginx 占用 80，转发到开发端口
+
+这个方案比较适合长期使用。
+
+你的 dev server 仍然跑在 3000：
+
+```bash
+npm run dev -- --host 127.0.0.1 --port 3000
+```
+
+安装 nginx：
+
+```bash
+sudo apt update
+sudo apt install nginx
+```
+
+配置 nginx：
+
+```bash
+sudo nano /etc/nginx/sites-available/dev
+```
+
+写入：
+
+```nginx
+server {
+    listen 80;
+    server_name localhost;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+启用配置：
+
+```bash
+sudo ln -s /etc/nginx/sites-available/dev /etc/nginx/sites-enabled/dev
+sudo nginx -t
+sudo service nginx restart
+```
+
+然后访问：
+
+```text
+http://localhost
+```
+
+---
+
+## 我建议你优先用这个方案
+
+如果你只是想让 Node dev server 直接监听 80：
+
+```bash
+sudo setcap 'cap_net_bind_service=+ep' $(which node)
+```
+
+然后：
+
+```bash
+npm run dev -- --host 0.0.0.0 --port 80
+```
+
+如果你想更稳定、更接近生产环境，用 nginx 反向代理。
